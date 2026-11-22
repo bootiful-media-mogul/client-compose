@@ -10,6 +10,8 @@ import kotlin.js.JsAny
 
 private fun jsPath(): String = js("window.location.pathname + window.location.search")
 
+private fun jsOrigin(): String = js("window.location.origin")
+
 private fun jsPushPath(path: String): Unit = js("window.history.pushState({}, '', path)")
 
 private fun jsReplacePath(path: String): Unit = js("window.history.replaceState({}, '', path)")
@@ -156,6 +158,8 @@ private class WebAudio(url: String) : AudioHandle {
 private object WebBrowser : Browser {
 
     override val path: String get() = jsPath()
+
+    override val origin: String get() = jsOrigin()
 
     override fun pushPath(path: String) = jsPushPath(path)
 

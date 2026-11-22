@@ -36,6 +36,21 @@
         document.documentElement.style.backgroundColor = colors[dark ? palette : 'light']
       })()
     </script>
+    <!-- Skia (skiko) asks WebGL for the GPU's name with WEBGL_debug_renderer_info's constants
+         without enabling that extension first, which WebGL answers with INVALID_ENUM, an error
+         in every console. enabling it on each WebGL context makes the same query legitimate -->
+    <script>
+      (function () {
+        var getContext = HTMLCanvasElement.prototype.getContext
+        HTMLCanvasElement.prototype.getContext = function (type) {
+          var context = getContext.apply(this, arguments)
+          if (context && (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl')) {
+            try { context.getExtension('WEBGL_debug_renderer_info') } catch (e) {}
+          }
+          return context
+        }
+      })()
+    </script>
 </head>
 <body>
     <script type="application/javascript" src="/webApp.js"></script>

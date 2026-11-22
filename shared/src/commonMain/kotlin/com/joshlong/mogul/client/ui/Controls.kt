@@ -1,5 +1,6 @@
 package com.joshlong.mogul.client.ui
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,10 +39,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -201,23 +206,19 @@ fun MogulTextField(
     onSubmit: (() -> Unit)? = null,
     textStyle: TextStyle? = null,
 ) {
-    var openTool by rememberSaveable { mutableStateOf<String?>(null) }
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
+    val count = if (value.isEmpty()) t("components.inputWrapper.empty") else tc("components.inputWrapper.character-count", value.length)
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.third)) {
-        if (label != null || showCount) {
+        // with tools, the count sits under the field, above the tool carousel, as in InputWrapper.vue
+        val countAbove = showCount && tools.isEmpty()
+        if (label != null || countAbove) {
             Row(verticalAlignment = Alignment.Bottom) {
                 if (label != null) FieldLabel(label, Modifier.weight(1f), required) else Spacer(Modifier.weight(1f))
-                if (showCount) {
-                    Text(
-                        if (value.isEmpty()) t("components.inputWrapper.empty") else tc("components.inputWrapper.character-count", value.length),
-                        color = palette.muted,
-                        fontSize = TextSize.xs,
-                    )
-                }
+                if (countAbove) Text(count, color = palette.muted, fontSize = TextSize.xs)
             }
         }
-        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
+        Row(verticalAlignment = Alignment.Top) {
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -248,36 +249,72 @@ fun MogulTextField(
                     },
                 )
             }
-            if (tools.isNotEmpty()) {
-                Column(verticalArrangement = Arrangement.spacedBy(Gutter.third)) {
-                    tools.forEach { tool ->
-                        IconButton(
-                            tool.icon,
-                            tool.label,
-                            onClick = { openTool = if (openTool == tool.label) null else tool.label },
-                            toggled = openTool == tool.label,
-                            enabled = enabled,
-                        )
-                    }
-                }
-            }
         }
-        tools.firstOrNull { it.label == openTool }?.let { tool ->
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(Gutter.radius))
-                    .background(palette.raised)
-                    .border(1.dp, palette.rule, RoundedCornerShape(Gutter.radius))
-                    .padding(Gutter.half),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(tool.label, modifier = Modifier.weight(1f), color = palette.label, fontWeight = FontWeight.SemiBold, fontSize = TextSize.sm)
-                    IconButton(MogulIcon.Close, t("icons.close"), onClick = { openTool = null }, size = 18.dp)
-                }
-                tool.content(value, onValueChange)
-            }
+        if (tools.isNotEmpty()) {
+            ToolCarousel(tools, value, onValueChange, count, enabled)
         }
+    }
+}
+
+/**
+ * the tools under a text field, as InputWrapper.vue draws them: the count, then one tool's icon
+ * between arrows that pick another. the icon opens that tool's panel, which drops down from the
+ * field with a tinted backdrop reaching up behind the count and the arrows; the icon becomes close.
+ */
+@Composable
+private fun ToolCarousel(tools: List<InputTool>, value: String, onValueChange: (String) -> Unit, count: String, enabled: Boolean) {
+    var current by rememberSaveable { mutableStateOf(0) }
+    var open by rememberSaveable { mutableStateOf(false) }
+    val tool = tools[current.coerceIn(tools.indices)]
+    // while a panel is open the arrows are off, as they were in the Vue menu
+    val canMove = !open && tools.size > 1
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .background(if (open) palette.raised.copy(alpha = 0.5f) else Color.Transparent)
+            .padding(if (open) Gutter.third else 0.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(count, color = palette.muted, fontSize = TextSize.xs)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
+            CarouselArrow(pointsLeft = true, t("components.inputWrapper.previous-tool"), canMove && current > 0) { current-- }
+            if (open) {
+                IconButton(MogulIcon.Close, t("icons.close"), onClick = { open = false })
+            } else {
+                IconButton(tool.icon, tool.label, onClick = { open = true }, enabled = enabled)
+            }
+            CarouselArrow(pointsLeft = false, t("components.inputWrapper.next-tool"), canMove && current < tools.lastIndex) { current++ }
+        }
+        if (open) {
+            Column(Modifier.fillMaxWidth().padding(top = Gutter.half)) { tool.content(value, onValueChange) }
+        }
+    }
+}
+
+@Composable
+private fun CarouselArrow(pointsLeft: Boolean, label: String, enabled: Boolean, onClick: () -> Unit) {
+    // drawn, not ◀ / ▶: with no text glyph in our fonts, the browser's emoji font answers instead
+    val color = palette.ink.copy(alpha = if (enabled) 1f else 0.3f)
+    Canvas(
+        Modifier
+            .clickable(enabled = enabled, role = Role.Button, onClickLabel = label, onClick = onClick)
+            .pointerHoverIcon(if (enabled) PointerIcon.Hand else PointerIcon.Default)
+            .semantics { contentDescription = label }
+            .padding(4.dp)
+            .size(10.dp),
+    ) {
+        val tip = if (pointsLeft) 0f else size.width
+        val base = size.width - tip
+        drawPath(
+            Path().apply {
+                moveTo(base, 0f)
+                lineTo(tip, size.height / 2)
+                lineTo(base, size.height)
+                close()
+            },
+            color,
+        )
     }
 }
 

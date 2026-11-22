@@ -134,7 +134,9 @@ fun PublicationsSection(
     Column(modifier.fillMaxWidth().padding(top = Gutter.full)) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
             plugins.forEach { plugin ->
-                PluginTile(plugin, isSelected = selected == plugin.name, anySelected = selected != null, enabled = enabled) {
+                // a tile always opens its panel, even for an incomplete publishable: the panel says
+                // what the plugin does, and only its publish buttons wait on `enabled`
+                PluginTile(plugin, isSelected = selected == plugin.name, anySelected = selected != null) {
                     selected = if (selected == plugin.name) null else plugin.name
                 }
             }
@@ -185,7 +187,7 @@ fun PublicationsSection(
  * hovering shows what a click does: the tile turns the panel's color, as a selected one is
  */
 @Composable
-private fun PluginTile(plugin: PublicationPlugin, isSelected: Boolean, anySelected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+private fun PluginTile(plugin: PublicationPlugin, isSelected: Boolean, anySelected: Boolean, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     val flatBottom = isSelected || anySelected
@@ -197,8 +199,8 @@ private fun PluginTile(plugin: PublicationPlugin, isSelected: Boolean, anySelect
             .clip(shape)
             .background(background)
             .hoverable(interaction)
-            .pointerHoverIcon(if (enabled) PointerIcon.Hand else PointerIcon.Default)
-            .clickable(interactionSource = interaction, indication = null, enabled = enabled, role = Role.Tab, onClick = onClick)
+            .pointerHoverIcon(PointerIcon.Hand)
+            .clickable(interactionSource = interaction, indication = null, role = Role.Tab, onClick = onClick)
             .semantics { contentDescription = pluginTitle(plugin.name) },
     ) {
         PluginIconImage(plugin.icon, null, tint = if (isSelected || hovered) palette.ink else palette.chromeInk)

@@ -10,6 +10,9 @@ interface Browser {
     /** the path and query of the current location, e.g. `/podcasts/3/episodes?x=1` */
     val path: String
 
+    /** where the page was served from, e.g. `http://127.0.0.1:1010`, for libraries that won't take a relative URL */
+    val origin: String
+
     fun pushPath(path: String)
 
     fun replacePath(path: String)

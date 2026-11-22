@@ -1,9 +1,15 @@
 package com.joshlong.mogul.client.managedfiles
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -16,7 +22,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.ImageLoader
@@ -35,7 +48,6 @@ import com.joshlong.mogul.client.theme.TextSize
 import com.joshlong.mogul.client.theme.fonts
 import com.joshlong.mogul.client.theme.palette
 import com.joshlong.mogul.client.ui.IconButton
-import com.joshlong.mogul.client.ui.MogulButton
 import com.joshlong.mogul.client.ui.MogulIcon
 import com.joshlong.mogul.client.ui.prettyPrintInBytes
 import kotlinx.coroutines.CoroutineStart
@@ -47,6 +59,13 @@ internal class PreviewableFile(val file: ManagedFile) {
 
     /** a visible file is served from its public URL; otherwise the api serves it to its owner */
     val url: String = if (this.file.visible && !this.file.visibleUrl.isNullOrBlank()) this.file.visibleUrl else "/api" + (this.file.url ?: "")
+
+    /**
+     * where an image's bytes are fetched from. unlike an <img>, Coil fetches with fetch(), which
+     * needs CORS headers the public CDN doesn't send, so it always goes through the api, same-origin.
+     * absolute, since Coil only gives http(s) URLs to its network fetcher: a bare path is never fetched
+     */
+    val imageUrl: String = browser.origin + "/api" + (this.file.url ?: "")
 
     val contentType: String = (this.file.contentType ?: "").lowercase()
 
@@ -97,7 +116,7 @@ fun PreviewPanel(modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.half)) {
         if (previewing.isImage) {
             AsyncImage(
-                model = previewing.url,
+                model = previewing.imageUrl,
                 contentDescription = t("managedfiles.alt.preview", "id" to previewing.file.id),
                 imageLoader = imageLoader,
                 contentScale = ContentScale.FillWidth,
@@ -112,6 +131,37 @@ fun PreviewPanel(modifier: Modifier = Modifier) {
         Text(prettyPrintInBytes(previewing.file.size), color = palette.ink, fontFamily = fonts.mono, fontSize = TextSize.sm)
         if (previewing.url.isNotBlank()) {
             IconButton(MogulIcon.Link, t("icons.open-link"), onClick = { browser.open(previewing.url, "managedFilePublicUrl") })
+        }
+    }
+}
+
+/** a chrome button with a drawn play triangle or pause bars: as ▶ text, the browser's emoji font drew it */
+@Composable
+private fun PlayPauseButton(playing: Boolean, onClick: () -> Unit) {
+    val ink = palette.chromeInk
+    Canvas(
+        Modifier
+            .clip(RoundedCornerShape(Gutter.radius))
+            .background(palette.chrome)
+            .clickable(role = Role.Button, onClick = onClick)
+            .pointerHoverIcon(PointerIcon.Hand)
+            .padding(horizontal = 14.dp, vertical = 10.dp)
+            .size(14.dp),
+    ) {
+        if (playing) {
+            val bar = size.width / 3
+            drawRect(ink, size = Size(bar, size.height))
+            drawRect(ink, topLeft = Offset(size.width - bar, 0f), size = Size(bar, size.height))
+        } else {
+            drawPath(
+                Path().apply {
+                    moveTo(0f, 0f)
+                    lineTo(size.width, size.height / 2)
+                    lineTo(0f, size.height)
+                    close()
+                },
+                ink,
+            )
         }
     }
 }
@@ -139,13 +189,10 @@ internal fun AudioPlayer(url: String, modifier: Modifier = Modifier) {
         onDispose { audio.release() }
     }
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
-        MogulButton(
-            if (playing) "❚❚" else "▶",
-            onClick = {
-                if (audio.paused) audio.play() else audio.pause()
-                playing = !audio.paused
-            },
-        )
+        PlayPauseButton(playing) {
+            if (audio.paused) audio.play() else audio.pause()
+            playing = !audio.paused
+        }
         Slider(
             value = if (duration.isNaN() || duration <= 0) 0f else (position / duration).toFloat().coerceIn(0f, 1f),
             onValueChange = { fraction ->
