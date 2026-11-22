@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- the app's resources (fonts, icons, the wasm) are fetched by relative URL; without
+         this, a deep link like /podcasts/1/episodes/2 asked for them under that path and got
+         index.html back from the client-side-routing fallback -->
+    <base href="/">
+    <title>Mogul Studio</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/manifest.json">
+    <link type="text/css" rel="stylesheet" href="/styles.css">
+    <!-- the api's public URL, set at runtime: nginx answers /config.js from the environment -->
+    <script src="/config.js"></script>
+    <!-- server-to-browser notifications. self-hosted, as the Vue client bundled it -->
+    <script src="/ably.min.js"></script>
+    <!-- the first paint is the page color of the palette the app will pick, so an evening
+         load never flashes the day theme. a copy of resolveTheme() in ThemePreferences.kt -->
+    <script>
+      (function () {
+        var p = {}
+        try { p = JSON.parse(localStorage.getItem('mogul.theme')) || {} } catch (e) {}
+        var mode = p.mode || 'auto'
+        var palette = ['midnight', 'graphite', 'ember'].indexOf(p.dark) >= 0 ? p.dark : 'midnight'
+        var evening = typeof p.evening === 'number' ? p.evening : 19
+        var morning = typeof p.morning === 'number' ? p.morning : 7
+        var follow = p.followSystem !== false
+        var h = new Date().getHours()
+        var night = evening === morning ? false
+          : evening < morning ? h >= evening && h < morning : h >= evening || h < morning
+        var os = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        var dark = mode === 'dark' || (mode === 'auto' && ((follow && os) || night))
+        var colors = { light: '#9ccbe8', midnight: '#0b1424', graphite: '#111316', ember: '#16110e' }
+        document.documentElement.style.backgroundColor = colors[dark ? palette : 'light']
+      })()
+    </script>
+</head>
+<body>
+    <script type="application/javascript" src="/webApp.js"></script>
+</body>
+</html>
