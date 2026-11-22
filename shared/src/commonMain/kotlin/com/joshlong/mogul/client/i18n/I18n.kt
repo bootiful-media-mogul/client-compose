@@ -16,6 +16,12 @@ fun t(key: String, args: Map<String, Any?>): String = interpolate(message(key) ?
  */
 private val composeMessages: Map<String, String> = mapOf(
     "app.redirecting" to "Redirecting…",
+    // the apps sign in themselves; the web build never shows these
+    "buttons.ok" to "OK",
+    "app.sign-in" to "Sign in",
+    "app.sign-in.prompt" to "Sign in to Mogul to reach your podcasts, blogs, and notes.",
+    "app.sign-in.failed" to "Signing in didn't work: {message}",
+    "app.sign-out" to "Sign out",
 )
 
 private fun message(key: String): String? = englishMessages[key] ?: composeMessages[key]

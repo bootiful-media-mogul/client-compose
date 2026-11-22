@@ -199,8 +199,9 @@ fun PodcastEpisodeEditorScreen(podcastId: Long, episodeId: Long) {
                 })
             }
 
-            Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                SectionTitle(t("podcasts.episodes.segments"), Modifier.weight(1f))
+            SectionTitle(t("podcasts.episodes.segments"))
+            // the new-segment plus is a toolbar under the title, as in the Vue editor
+            Row(Modifier.fillMaxWidth().padding(vertical = Gutter.half)) {
                 IconButton(MogulIcon.Plus, t("icons.new-segment"), enabled = draftId != 0L, onClick = {
                     publicationsDisabled = true
                     scope.launchSafely {
@@ -251,9 +252,9 @@ fun PodcastEpisodeEditorScreen(podcastId: Long, episodeId: Long) {
                         },
                         onDelete = {
                             val details = t("podcasts.episodes.segments.number", "id" to segment.order)
-                            if (confirmDeletion(t("confirm.deletion", "title" to details))) {
-                                publicationsDisabled = true
-                                scope.launchSafely {
+                            scope.launchSafely {
+                                if (confirmDeletion(t("confirm.deletion", "title" to details))) {
+                                    publicationsDisabled = true
                                     Mogul.podcasts.deletePodcastEpisodeSegment(segment.id)
                                     loadEpisodeSegments(draftId)
                                 }

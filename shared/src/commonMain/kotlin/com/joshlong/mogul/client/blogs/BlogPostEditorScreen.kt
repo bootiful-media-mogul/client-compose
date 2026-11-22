@@ -1,5 +1,6 @@
 package com.joshlong.mogul.client.blogs
 
+import com.joshlong.mogul.client.ui.FormSectionTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -172,8 +173,4 @@ fun BlogPostEditorScreen(blogId: Long, postId: Long) {
 
 /** a .form-section-title: a small heading inside a fieldset */
 @Composable
-private fun SectionTitle(text: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text, color = palette.label, fontFamily = fonts.display, fontWeight = FontWeight.Bold, fontSize = TextSize.lg)
-    }
-}
+private fun SectionTitle(text: String) = FormSectionTitle(text)

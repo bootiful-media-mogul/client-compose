@@ -1,6 +1,6 @@
 package com.joshlong.mogul.client.podcasts.segments
 
-import io.ktor.client.HttpClient
+import com.joshlong.mogul.client.api.Mogul
 import io.ktor.client.request.get
 import io.ktor.client.statement.readRawBytes
 
@@ -37,10 +37,8 @@ fun parseWaveform(bytes: ByteArray): Waveform {
     return Waveform(durationMilliseconds / 1000.0, peaksPerSecond, peaks)
 }
 
-private val http by lazy { HttpClient() }
-
 suspend fun loadWaveform(url: String): Waveform {
-    val response = http.get("/api$url")
+    val response = Mogul.http.get("/api$url")
     if (response.status.value !in 200..299) error("couldn't download $url: HTTP ${response.status.value}")
     return parseWaveform(response.readRawBytes())
 }

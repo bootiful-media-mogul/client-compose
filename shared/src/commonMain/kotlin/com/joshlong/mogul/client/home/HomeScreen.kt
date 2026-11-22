@@ -1,5 +1,6 @@
 package com.joshlong.mogul.client.home
 
+import com.joshlong.mogul.client.ui.PageTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -68,7 +69,7 @@ fun HomeScreen() {
     ListenForNotification("publication-completed-event") { scope.launch { refresh() } }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
-        Text(t("home.title"), style = MaterialTheme.typography.headlineMedium, color = palette.ink)
+        PageTitle(t("home.title"))
         FormSection(t("home.publications")) {
             PublicationsCalendar(
                 publications = shown,

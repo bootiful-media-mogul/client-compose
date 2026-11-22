@@ -29,3 +29,5 @@ dependencyResolutionManagement {
 
 include(":shared")
 include(":webApp")
+include(":androidApp")
+include(":desktopApp")

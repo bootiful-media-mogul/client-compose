@@ -1,5 +1,6 @@
 package com.joshlong.mogul.client.podcasts
 
+import com.joshlong.mogul.client.ui.LocalWindowWidth
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -95,7 +96,8 @@ internal fun PodcastEpisodeSegmentRow(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             Row(
                 Modifier
-                    .widthIn(min = 130.dp)
+                    // minmax(12vw, 130px), as the Vue grid sized the type column
+                    .widthIn(min = maxOf(130.dp, LocalWindowWidth.current * 0.12f))
                     .clip(RoundedCornerShape(bottomEnd = Gutter.radius))
                     .background(palette.chrome)
                     .padding(Gutter.half),

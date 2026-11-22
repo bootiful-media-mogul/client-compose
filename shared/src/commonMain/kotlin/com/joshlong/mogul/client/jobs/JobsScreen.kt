@@ -1,5 +1,6 @@
 package com.joshlong.mogul.client.jobs
 
+import com.joshlong.mogul.client.ui.PageTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -82,7 +83,7 @@ fun JobsScreen() {
     }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
-        Text(t("jobs.title"), style = MaterialTheme.typography.headlineMedium, color = palette.ink)
+        PageTitle(t("jobs.title"))
         all.forEach { request ->
             val name = t("jobs.name.${request.job.name}")
             FormSection(name) {

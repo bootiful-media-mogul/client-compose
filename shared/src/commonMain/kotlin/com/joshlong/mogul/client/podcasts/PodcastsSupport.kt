@@ -1,5 +1,6 @@
 package com.joshlong.mogul.client.podcasts
 
+import com.joshlong.mogul.client.ui.FormSectionTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,27 +47,11 @@ import kotlin.time.Instant
 
 /** a page's heading, as the views' h1 */
 @Composable
-internal fun PageTitle(text: String) {
-    Text(
-        text,
-        modifier = Modifier.padding(bottom = Gutter.full),
-        style = MaterialTheme.typography.headlineMedium,
-        color = palette.ink,
-    )
-}
+internal fun PageTitle(text: String) = com.joshlong.mogul.client.ui.PageTitle(text)
 
 /** a heading inside a fieldset, as .form-section-title */
 @Composable
-internal fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(
-        text,
-        modifier = modifier.padding(top = Gutter.half),
-        color = palette.label,
-        fontFamily = fonts.display,
-        fontWeight = FontWeight.Bold,
-        fontSize = TextSize.lg,
-    )
-}
+internal fun SectionTitle(text: String, modifier: Modifier = Modifier) = FormSectionTitle(text, modifier)
 
 /** a coroutine whose failure is reported rather than taking the app down with it */
 internal fun CoroutineScope.launchSafely(block: suspend CoroutineScope.() -> Unit) {

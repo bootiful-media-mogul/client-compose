@@ -1,5 +1,6 @@
 package com.joshlong.mogul.client.about
 
+import com.joshlong.mogul.client.ui.PageTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
@@ -12,7 +13,7 @@ import com.joshlong.mogul.client.theme.palette
 @Composable
 fun AboutScreen() {
     Column(verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
-        Text(t("about.title"), style = MaterialTheme.typography.headlineMedium, color = palette.ink)
+        PageTitle(t("about.title"))
         Text(t("app.made-with-love", "josh" to "Josh Long"), color = palette.ink)
     }
 }

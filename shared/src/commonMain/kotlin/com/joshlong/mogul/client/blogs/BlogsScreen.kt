@@ -79,7 +79,7 @@ fun BlogsScreen() {
             actions = {
                 IconButton(MogulIcon.Plus, t("icons.new-blog"), onClick = {
                     scope.launch { draft = Mogul.blogs.createBlog("", "") }
-                }, tint = palette.chromeInk, hoverTint = palette.brand)
+                })
             },
         ) {
             blogs.forEach { blog ->
@@ -92,8 +92,8 @@ fun BlogsScreen() {
                         browser.open(url, "rssWindowForBlogNo${blog.id}")
                     },
                     onDelete = {
-                        if (confirmDeletion(t("confirm.deletion", "title" to blog.title))) {
-                            scope.launch {
+                        scope.launch {
+                            if (confirmDeletion(t("confirm.deletion", "title" to blog.title))) {
                                 Mogul.blogs.deleteBlog(blog.id)
                                 reset()
                             }
@@ -184,9 +184,7 @@ fun BlogSelect(selectedBlogId: Long?, onSelect: (Long) -> Unit, modifier: Modifi
 }
 
 @Composable
-internal fun PageTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.headlineMedium, color = palette.ink)
-}
+internal fun PageTitle(text: String) = com.joshlong.mogul.client.ui.PageTitle(text)
 
 @Composable
 internal fun RowRule() {

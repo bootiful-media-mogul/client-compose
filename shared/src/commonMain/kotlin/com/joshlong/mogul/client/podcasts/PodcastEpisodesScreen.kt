@@ -1,9 +1,9 @@
 package com.joshlong.mogul.client.podcasts
 
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,7 +34,6 @@ import com.joshlong.mogul.client.ui.FormSection
 import com.joshlong.mogul.client.ui.Icon
 import com.joshlong.mogul.client.ui.IconButton
 import com.joshlong.mogul.client.ui.MogulIcon
-import com.joshlong.mogul.client.ui.Rule
 import com.joshlong.mogul.client.ui.confirmDeletion
 import com.joshlong.mogul.client.ui.dateTimeToString
 
@@ -68,8 +67,6 @@ fun PodcastEpisodesScreen(podcastId: Long) {
                             Router.push(Route.PodcastEpisode(podcastId, episode.id))
                         }
                     },
-                    tint = palette.chromeInk,
-                    hoverTint = palette.brand,
                 )
             },
         ) {
@@ -78,8 +75,8 @@ fun PodcastEpisodesScreen(podcastId: Long) {
                     episode,
                     onEdit = { Router.push(Route.Entity("episode", episode.id)) },
                     onDelete = {
-                        if (confirmDeletion(t("confirm.deletion", "title" to episode.title))) {
-                            scope.launchSafely {
+                        scope.launchSafely {
+                            if (confirmDeletion(t("confirm.deletion", "title" to episode.title))) {
                                 Mogul.podcasts.deletePodcastEpisode(episode.id)
                                 loadPodcast()
                             }
@@ -91,15 +88,18 @@ fun PodcastEpisodesScreen(podcastId: Long) {
     }
 }
 
-/** an episode, laid out as a search result (Result.vue): the title, then edit, date, id and delete */
+/**
+ * an episode, laid out as a search result (Result.vue): the type's icon faded in a column of
+ * its own, then the title, and under it edit, the date, the id and delete
+ */
 @Composable
 private fun EpisodeResult(episode: PodcastEpisode, onEdit: () -> Unit, onDelete: () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
-        Rule(padding = PaddingValues(bottom = Gutter.half))
-        Row(Modifier.fillMaxWidth().padding(bottom = Gutter.half), horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
-            Icon(MogulIcon.Podcast, null, size = 36.dp, tint = palette.muted)
+        Box(Modifier.fillMaxWidth().height(1.dp).background(palette.rule))
+        Row(Modifier.fillMaxWidth().padding(vertical = Gutter.half), horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
+            Icon(MogulIcon.Podcast, null, size = 48.dp, tint = palette.ink.copy(alpha = 0.3f))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
-                Text(episode.title, color = palette.ink)
+                if (episode.title.isNotBlank()) Text(episode.title, color = palette.ink)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(MogulIcon.Edit, t("icons.edit", "name" to episode.title), onClick = onEdit)
                     Text(

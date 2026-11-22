@@ -2,6 +2,7 @@
 
 package com.joshlong.mogul.client.platform
 
+import io.ktor.client.HttpClient
 import kotlin.js.ExperimentalWasmJsInterop
 import kotlin.js.JsAny
 
@@ -183,7 +184,7 @@ private object WebBrowser : Browser {
 
     override fun onStorage(callback: (key: String, value: String?) -> Unit) = jsOnStorage(callback)
 
-    override fun confirm(message: String): Boolean = jsConfirm(message)
+    override suspend fun confirm(message: String): Boolean = jsConfirm(message)
 
     override fun open(url: String, target: String) = jsOpen(url, target)
 
@@ -221,3 +222,15 @@ private object WebBrowser : Browser {
 }
 
 actual val browser: Browser = WebBrowser
+
+/** relative URLs, sent with the gateway's session cookie by the browser */
+actual fun createHttpClient(): HttpClient = HttpClient()
+
+/** the gateway signs the browser in, before the page ever loads */
+actual val signIn: SignIn = object : SignIn {
+    override val available: Boolean = false
+
+    override suspend fun signIn() = Unit
+
+    override suspend fun signOut() = Unit
+}

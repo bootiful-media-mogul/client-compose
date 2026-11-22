@@ -107,7 +107,7 @@ private fun WritingAssistant(value: String, onValueChange: (String) -> Unit) {
     }
 
     if (proposalApprovalRequired) {
-        Row(horizontalArrangement = Arrangement.spacedBy(Gutter.half), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Gutter.half, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
             Text(t("buttons.accept"), Modifier.clickable(role = Role.Button) { reset() }, color = palette.ink, fontWeight = FontWeight.SemiBold, fontSize = TextSize.sm)
             Text("|", color = palette.muted, fontSize = TextSize.sm)
             Text(
@@ -124,7 +124,8 @@ private fun WritingAssistant(value: String, onValueChange: (String) -> Unit) {
         return
     }
 
-    Column(verticalArrangement = Arrangement.spacedBy(Gutter.third)) {
+    // the tools sit centered in the panel, under the carousel that opened it
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.third), horizontalAlignment = Alignment.CenterHorizontally) {
         Row(horizontalArrangement = Arrangement.spacedBy(Gutter.third)) {
             ToolButton(MogulIcon.Proofread, t("writingassistant.buttons.proofread"), active = false, enabled = !working) {
                 val contents = value.trim()
@@ -216,7 +217,7 @@ private fun MarkdownTool(value: String, onValueChange: (String) -> Unit) {
     fun append(text: String) = onValueChange(if (value.isEmpty() || value.endsWith("\n")) value + text else "$value\n$text")
 
     Column(verticalArrangement = Arrangement.spacedBy(Gutter.half)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Gutter.half, Alignment.CenterHorizontally)) {
             IconButton(MogulIcon.Bold, t("icons.bold"), onClick = { lastLine { "**$it**" } }, size = 20.dp)
             IconButton(MogulIcon.Italic, t("icons.italic"), onClick = { lastLine { "*$it*" } }, size = 20.dp)
             IconButton(MogulIcon.Link, t("icons.link"), onClick = { pending = PendingPrompt.Link; answer = "" }, size = 20.dp)

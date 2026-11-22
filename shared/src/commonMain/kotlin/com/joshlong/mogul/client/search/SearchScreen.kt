@@ -23,9 +23,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -38,8 +38,8 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,6 +59,7 @@ import com.joshlong.mogul.client.ui.FormSection
 import com.joshlong.mogul.client.ui.Icon
 import com.joshlong.mogul.client.ui.IconButton
 import com.joshlong.mogul.client.ui.MogulIcon
+import com.joshlong.mogul.client.ui.PageTitle
 import com.joshlong.mogul.client.ui.dateTimeToString
 import kotlinx.coroutines.delay
 
@@ -71,7 +72,7 @@ fun SearchScreen(query: String?) {
         results = runCatching { Mogul.search.search(term) }.getOrElse { emptyList() }
     }
     Column(verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
-        Text(t("search.results.title"), style = MaterialTheme.typography.headlineMedium, color = palette.ink)
+        PageTitle(t("search.results.title"))
         val found = results
         FormSection(
             if (found != null) t("search.results.prompt", "count" to found.size, "term" to term) else t("search.no-results.prompt"),
@@ -265,16 +266,22 @@ fun SearchPalette(open: Boolean, onDismiss: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun PaletteRow(option: PaletteOption, selected: Boolean, onHover: () -> Unit, onClick: () -> Unit) {
     val ink = if (selected) palette.accentInk else palette.ink
+    val hover by rememberUpdatedState(onHover)
     Row(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(Gutter.radius))
             .background(if (selected) palette.accent else palette.raised)
-            .onPointerEvent(PointerEventType.Move) { onHover() }
+            // a pointer that moves picks the row it's over; one that sits still while the list
+            // scrolls under it doesn't
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) if (awaitPointerEvent().type == PointerEventType.Move) hover()
+                }
+            }
             .pointerHoverIcon(PointerIcon.Hand)
             .clickable(onClick = onClick)
             .padding(Gutter.half),

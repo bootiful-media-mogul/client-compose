@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,6 +27,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -37,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
@@ -46,10 +50,13 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.joshlong.mogul.client.about.AboutScreen
 import com.joshlong.mogul.client.api.Mogul
 import com.joshlong.mogul.client.api.User
@@ -68,6 +75,7 @@ import com.joshlong.mogul.client.nav.Router
 import com.joshlong.mogul.client.notes.NotesPanel
 import com.joshlong.mogul.client.notifications.NotificationBox
 import com.joshlong.mogul.client.platform.browser
+import com.joshlong.mogul.client.platform.signIn
 import com.joshlong.mogul.client.podcasts.PodcastEpisodeEditorScreen
 import com.joshlong.mogul.client.podcasts.PodcastEpisodesScreen
 import com.joshlong.mogul.client.podcasts.PodcastsScreen
@@ -81,9 +89,14 @@ import com.joshlong.mogul.client.theme.ThemeController
 import com.joshlong.mogul.client.theme.fonts
 import com.joshlong.mogul.client.theme.palette
 import com.joshlong.mogul.client.transcripts.TranscriptsPanel
+import com.joshlong.mogul.client.ui.ConfirmationDialog
 import com.joshlong.mogul.client.ui.Icon
 import com.joshlong.mogul.client.ui.IconButton
+import com.joshlong.mogul.client.ui.LayoutWidth
+import com.joshlong.mogul.client.ui.LocalLayoutWidth
+import com.joshlong.mogul.client.ui.LocalWindowWidth
 import com.joshlong.mogul.client.ui.MogulIcon
+import kotlinx.coroutines.launch
 
 /** the places the studio's chrome can take you: the main ones are the big icons in the top bar */
 private enum class Section(val label: String, val icon: MogulIcon, val main: Boolean) {
@@ -113,28 +126,47 @@ private fun mainSectionFor(route: Route): Section? = when (route) {
 /** below this the layout is mobile's: one column of tabs and a floating toolbar */
 private val desktopBreak = 900.dp
 
+/** from this the page stops stretching and is centered, [pageWidth] wide */
+private val wideBreak = 1700.dp
+
+private val pageWidth = 1600.dp
+
 @Composable
 fun App() {
     val scope = rememberCoroutineScope()
     var me by remember { mutableStateOf<User?>(null) }
     var paletteOpen by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        browser.setDocumentLanguage("en")
-        ThemeController.start(scope)
-        Router.start(scope)
-        Router.resumePendingAction()
+    // the apps sign in themselves: until they have, or once the api stops taking their token,
+    // they show the sign-in screen. the web build never does; the gateway signs it in
+    var needsSignIn by remember { mutableStateOf(false) }
+
+    suspend fun loadSession() {
         // signed in is having a mogul, not having an email: a GitHub login often has none
         val user = runCatching { Mogul.mogul.user() }.getOrNull()
         if (user != null && user.id != 0L) {
             me = user
+            needsSignIn = false
             // here rather than in a view: this runs once per session whatever page you land
             // on. anything that resolves "today" server-side needs the zone on record
             runCatching { Mogul.mogul.adoptBrowserTimeZoneIfUnset(user) }
             Mogul.notifications.start()
         } else {
             println("could not get user info from mogul.user()")
+            needsSignIn = signIn.available
         }
+    }
+
+    LaunchedEffect(Unit) {
+        browser.setDocumentLanguage("en")
+        ThemeController.start(scope)
+        Router.start(scope)
+        Router.resumePendingAction()
+        loadSession()
+    }
+
+    LaunchedEffect(Unit) {
+        Events.events.collect { if (it is AppEvent.Unauthorized && signIn.available) needsSignIn = true }
     }
 
     val route = Router.route
@@ -159,13 +191,23 @@ fun App() {
                 },
         ) {
             val user = me
-            if (user != null) {
+            if (needsSignIn) {
+                SignInScreen(onSignedIn = { scope.launch { loadSession() } })
+            } else if (user != null) {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
-                    val wide = maxWidth >= desktopBreak
-                    if (wide) DesktopLayout(user, route, onSearch = { paletteOpen = true })
-                    else MobileLayout(user, route, onSearch = { paletteOpen = true })
+                    // base.css's container queries: mobile below 900, a centered page from 1700
+                    val width = when {
+                        maxWidth < desktopBreak -> LayoutWidth.Mobile
+                        maxWidth < wideBreak -> LayoutWidth.Desktop
+                        else -> LayoutWidth.Wide
+                    }
+                    CompositionLocalProvider(LocalLayoutWidth provides width, LocalWindowWidth provides maxWidth) {
+                        if (width == LayoutWidth.Mobile) MobileLayout(user, route, onSearch = { paletteOpen = true })
+                        else DesktopLayout(user, route, onSearch = { paletteOpen = true })
+                    }
                 }
                 SearchPalette(open = paletteOpen, onDismiss = { paletteOpen = false })
+                ConfirmationDialog()
                 NotificationBox()
             }
         }
@@ -194,25 +236,26 @@ private fun RouteContent(route: Route) {
     }
 }
 
+/**
+ * the desktop page, as App.vue's grid: the top bar, then the view beside a 400-wide sidebar.
+ * the view starts a gutter and a half under the bar (the room the section names drop into)
+ * plus a gutter; the sidebar's panels sit a gutter higher than that.
+ */
 @Composable
 private fun DesktopLayout(user: User, route: Route, onSearch: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
-        TopBar(user, route, onSearch)
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = Gutter.full)
-                .widthIn(max = 1600.dp)
-                .align(Alignment.CenterHorizontally),
-            horizontalArrangement = Arrangement.spacedBy(Gutter.full),
-        ) {
+        // over the page, which the section names' tabs drop onto
+        TopBar(user, route, onSearch, Modifier.zIndex(1f))
+        Row(Modifier.fillMaxSize().widthIn(max = pageWidth).align(Alignment.CenterHorizontally)) {
             Column(
-                Modifier.weight(1f).fillMaxSize().verticalScroll(rememberScrollState()).padding(top = Gutter.full, bottom = 48.dp),
+                Modifier.weight(1f).fillMaxSize().verticalScroll(rememberScrollState())
+                    .padding(start = Gutter.full, end = Gutter.full, top = 40.dp, bottom = 48.dp),
             ) {
                 RouteContent(route)
             }
             Column(
-                Modifier.width(400.dp).fillMaxSize().verticalScroll(rememberScrollState()).padding(top = Gutter.full, bottom = 48.dp),
+                Modifier.width(400.dp + Gutter.full).fillMaxSize().verticalScroll(rememberScrollState())
+                    .padding(start = Gutter.full * 2, top = 24.dp, bottom = 48.dp),
                 verticalArrangement = Arrangement.spacedBy(Gutter.full),
             ) {
                 SidebarPanelFrame(SidebarPanel.Notes, t("app.panels.notes"), MogulIcon.Notes) { NotesPanel() }
@@ -224,9 +267,11 @@ private fun DesktopLayout(user: User, route: Route, onSearch: () -> Unit) {
 }
 
 /**
- * one of the sidebar's panels: a chrome title bar with a toggle, collapsed on arrival
- * (three expanded panels push the page long before you've asked for any of them), and
- * opened when something asks for it, e.g. a preview link
+ * one of the sidebar's panels (PanelComponent.vue): a chrome title bar in spaced capitals
+ * with a toggle, collapsed on arrival (three expanded panels push the page long before
+ * you've asked for any of them), and opened when something asks for it, e.g. a preview
+ * link. it meets the window's right edge, so only its left corners round, until the page
+ * is centered and it ends in open space.
  */
 @Composable
 private fun SidebarPanelFrame(panel: SidebarPanel, title: String, icon: MogulIcon, content: @Composable () -> Unit) {
@@ -234,21 +279,37 @@ private fun SidebarPanelFrame(panel: SidebarPanel, title: String, icon: MogulIco
     LaunchedEffect(panel) {
         Events.events.collect { if (it is AppEvent.SidebarPanelOpened && it.panel == panel) visible = true }
     }
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(Gutter.radius)).background(palette.panelBg)) {
+    val shape = if (LocalLayoutWidth.current == LayoutWidth.Wide) RoundedCornerShape(Gutter.radius)
+    else RoundedCornerShape(topStart = Gutter.radius, bottomStart = Gutter.radius)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .shadow(24.dp, shape, ambientColor = Color.Black.copy(alpha = 0.5f), spotColor = Color.Black.copy(alpha = 0.5f))
+            .clip(shape)
+            .background(palette.panelBg),
+    ) {
         Row(
-            Modifier.fillMaxWidth().background(palette.chrome).padding(horizontal = Gutter.full, vertical = Gutter.half),
+            Modifier.fillMaxWidth().background(palette.chrome).padding(Gutter.half),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Gutter.half),
+            horizontalArrangement = Arrangement.spacedBy(Gutter.third),
         ) {
-            Icon(icon, null, size = 20.dp, tint = palette.chromeInk)
-            Text(title, Modifier.weight(1f), color = palette.chromeInk, fontFamily = fonts.mono, fontSize = TextSize.sm)
+            Icon(icon, null, size = 21.dp, tint = palette.chromeInk)
+            Text(
+                title.uppercase(),
+                Modifier.weight(1f),
+                color = palette.chromeInk,
+                fontFamily = fonts.mono,
+                fontWeight = FontWeight.Medium,
+                fontSize = TextSize.sm,
+                letterSpacing = (0.12 * 15).sp,
+            )
             IconButton(
                 if (visible) MogulIcon.Collapse else MogulIcon.Maximize,
                 t(if (visible) "panel.alt.minimize" else "panel.alt.open", "panel" to title),
                 onClick = { visible = !visible },
-                size = 20.dp,
-                tint = palette.chromeInk,
-                hoverTint = palette.brand,
+                size = 12.dp,
+                tint = palette.chromeInk.copy(alpha = 0.85f),
+                hoverTint = palette.chromeInk,
             )
         }
         if (visible) {
@@ -345,7 +406,7 @@ private fun MobileLayout(user: User, route: Route, onSearch: () -> Unit) {
 
 /** the wordmark: "mogul" in the display face, "studio" in spaced mono in the brand hue */
 @Composable
-private fun BrandMark(size: Int) {
+internal fun BrandMark(size: Int) {
     Row(
         Modifier.clickable { Router.push(Route.Home) }.pointerHoverIcon(PointerIcon.Hand),
         verticalAlignment = Alignment.Bottom,
@@ -364,41 +425,73 @@ private fun BrandMark(size: Int) {
     }
 }
 
-/** wordmark, the main sections, then search and the account, on a full-width black band */
+/**
+ * wordmark, the main sections, then search and the account, on a full-width black band whose
+ * contents stay in the page's width; equal sides keep the icons centered on the page
+ */
 @Composable
-private fun TopBar(user: User, route: Route, onSearch: () -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().background(palette.topbar).padding(horizontal = 32.dp, vertical = Gutter.full),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.weight(1f)) { BrandMark(32) }
-        Row(horizontalArrangement = Arrangement.spacedBy(Gutter.full), verticalAlignment = Alignment.CenterVertically) {
-            Section.entries.filter { it.main }.forEach { section ->
-                val active = mainSectionFor(route) == section
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(
-                        section.icon,
-                        t(section.label),
-                        onClick = { section.go() },
-                        size = 36.dp,
-                        tint = palette.chromeInk,
-                        hoverTint = palette.brand,
-                    )
-                    // where you are: a short rule in the brand color under the section's icon
-                    Box(
-                        Modifier.padding(top = 4.dp).width(20.dp).height(3.dp).clip(RoundedCornerShape(2.dp))
-                            .background(if (active) palette.brand else palette.topbar),
-                    )
-                }
-            }
-        }
+private fun TopBar(user: User, route: Route, onSearch: () -> Unit, modifier: Modifier = Modifier) {
+    Box(modifier.fillMaxWidth().background(palette.topbar)) {
         Row(
-            Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(Gutter.half, Alignment.End),
+            Modifier.fillMaxWidth().widthIn(max = pageWidth).align(Alignment.Center).padding(horizontal = 32.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            SearchButton(onSearch)
-            AccountMenu(user, up = false)
+            Box(Modifier.weight(1f)) { BrandMark(32) }
+            Row(Modifier.padding(vertical = Gutter.full), horizontalArrangement = Arrangement.spacedBy(Gutter.full)) {
+                Section.entries.filter { it.main }.forEach { section -> NavItem(section, active = mainSectionFor(route) == section) }
+            }
+            Row(
+                Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(Gutter.half, Alignment.End),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SearchButton(onSearch)
+                AccountMenu(user, up = false)
+            }
+        }
+    }
+}
+
+/**
+ * a main section's icon. the section you're in has a short brand-colored rule under it, and
+ * hovering shows the section's name in small capitals on a tab that drops out of the bottom
+ * of the bar; the tab takes no room, so the icons stay centered
+ */
+@Composable
+private fun NavItem(section: Section, active: Boolean) {
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    Box(Modifier.hoverable(interaction)) {
+        IconButton(section.icon, t(section.label), onClick = { section.go() }, size = 48.dp, tint = palette.chromeInk, hoverTint = palette.brand)
+        if (active) {
+            Box(
+                Modifier.align(Alignment.BottomCenter).offset(y = 9.6.dp)
+                    .size(20.dp, 3.dp).clip(RoundedCornerShape(2.dp)).background(palette.brand),
+            )
+        }
+        if (hovered) {
+            // a zero-size anchor at the icon's foot, with the tab hung from it, centered
+            Box(
+                Modifier.align(Alignment.BottomCenter).layout { measurable, _ ->
+                    val tab = measurable.measure(Constraints())
+                    layout(0, 0) { tab.place(-tab.width / 2, 0) }
+                },
+            ) {
+                Text(
+                    t(section.label).uppercase(),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(bottomStart = Gutter.radius, bottomEnd = Gutter.radius))
+                        .background(palette.topbar)
+                        .padding(start = Gutter.full, end = Gutter.full, top = 20.dp, bottom = Gutter.half),
+                    color = palette.brand,
+                    fontSize = TextSize.xs,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = (0.08 * 12).sp,
+                    lineHeight = 12.sp,
+                    maxLines = 1,
+                    softWrap = false,
+                )
+            }
         }
     }
 }
@@ -469,6 +562,20 @@ private fun AccountMenu(user: User, up: Boolean) {
                     onClick = {
                         open = false
                         section.go()
+                    },
+                )
+            }
+            // the apps hold their own tokens, so they can let them go; the web signs out at the gateway
+            if (signIn.available) {
+                val scope = rememberCoroutineScope()
+                DropdownMenuItem(
+                    text = { Text(t("app.sign-out"), color = palette.ink) },
+                    onClick = {
+                        open = false
+                        scope.launch {
+                            signIn.signOut()
+                            Events.emit(AppEvent.Unauthorized)
+                        }
                     },
                 )
             }

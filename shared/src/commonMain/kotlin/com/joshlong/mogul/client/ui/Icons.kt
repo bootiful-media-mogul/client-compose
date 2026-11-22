@@ -79,7 +79,7 @@ enum class MogulIcon(val resource: DrawableResource) {
     Up(Res.drawable.ic_up),
 }
 
-/** an icon, drawn in tint (the ink, by default) */
+/** an icon, drawn in tint (the ink, by default); Color.Unspecified keeps a logo's own colors */
 @Composable
 fun Icon(
     icon: MogulIcon,
@@ -92,7 +92,7 @@ fun Icon(
         painter = painterResource(icon.resource),
         contentDescription = contentDescription,
         modifier = modifier.size(size),
-        colorFilter = ColorFilter.tint(tint),
+        colorFilter = if (tint == Color.Unspecified) null else ColorFilter.tint(tint),
     )
 }
 
@@ -117,7 +117,8 @@ fun IconButton(
     val hovered by interaction.collectIsHoveredAsState()
     val focused by interaction.collectIsFocusedAsState()
     val color = when {
-        !enabled -> palette.disabledInk.copy(alpha = 0.6f)
+        // as the .disabled class: the icon's own ink, faded, so it reads as there but unavailable
+        !enabled -> tint.copy(alpha = 0.3f)
         toggled == true || hovered || focused -> hoverTint
         else -> tint
     }

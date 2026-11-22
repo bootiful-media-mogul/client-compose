@@ -1,5 +1,7 @@
 package com.joshlong.mogul.client.platform
 
+import io.ktor.client.HttpClient
+
 /**
  * everything the studio needs from the page it runs in. the Vue client reached for
  * `window` wherever it needed it; here it all goes through this one seam, so the rest of
@@ -39,7 +41,7 @@ interface Browser {
     fun onStorage(callback: (key: String, value: String?) -> Unit)
 
     /** the browser's own blocking confirmation, as the Vue client used for deletions */
-    fun confirm(message: String): Boolean
+    suspend fun confirm(message: String): Boolean
 
     fun open(url: String, target: String = "_blank")
 
@@ -117,3 +119,22 @@ interface AudioHandle {
 }
 
 expect val browser: Browser
+
+/**
+ * the one HTTP client: on the web a plain one, which the gateway's session cookie authenticates;
+ * in the apps one that resolves `/api/...` against the gateway and carries the bearer token
+ */
+expect fun createHttpClient(): HttpClient
+
+/** signing in, for the apps, which are oauth clients of their own. the web build is signed in by the gateway */
+interface SignIn {
+
+    /** whether this build signs in itself (and so shows a sign-in screen when it isn't) */
+    val available: Boolean
+
+    suspend fun signIn()
+
+    suspend fun signOut()
+}
+
+expect val signIn: SignIn

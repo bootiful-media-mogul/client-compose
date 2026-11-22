@@ -43,8 +43,8 @@ fun ListenForNotification(category: String, onNotification: (Notification) -> Un
     }
 }
 
-/** the browser's own confirmation, as the Vue client asked before deleting anything */
-fun confirmDeletion(message: String): Boolean = browser.confirm(message)
+/** asks before deleting anything: the browser's own confirmation on the web, as the Vue client did, and a dialog in the apps */
+suspend fun confirmDeletion(message: String): Boolean = browser.confirm(message)
 
 // dates, as dates.ts formatted them (en-US, two-digit fields)
 

@@ -76,7 +76,14 @@ fun pluginTitle(plugin: String): String {
 internal fun PluginIconImage(icon: PluginIcon, contentDescription: String?, modifier: Modifier = Modifier, tint: Color = palette.chromeInk) {
     when (icon) {
         is PluginIcon.Png -> Image(painterResource(icon.resource), contentDescription, modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        is PluginIcon.Svg -> Icon(icon.icon, contentDescription, modifier.padding(6.dp), size = 38.dp, tint = tint)
+        // the ayrshare mark is drawn in its own red, as in the Vue client; the other svgs take the tint
+        is PluginIcon.Svg -> Icon(
+            icon.icon,
+            contentDescription,
+            modifier.padding(6.dp),
+            size = 38.dp,
+            tint = if (icon.icon == MogulIcon.Ayrshare) Color.Unspecified else tint,
+        )
     }
 }
 

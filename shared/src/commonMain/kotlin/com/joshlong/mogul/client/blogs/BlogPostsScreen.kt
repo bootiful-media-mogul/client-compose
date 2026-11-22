@@ -57,13 +57,13 @@ fun BlogPostsScreen(blogId: Long) {
                         val post = Mogul.blogs.createPost(blogId, "", "", "")
                         Router.push(Route.BlogPost(blogId, post.id))
                     }
-                }, tint = palette.chromeInk, hoverTint = palette.brand)
+                })
             },
         ) {
             posts.forEach { post ->
                 PostResult(post, onEdit = { Router.push(Route.BlogPost(blogId, post.id)) }, onDelete = {
-                    if (confirmDeletion(t("confirm.deletion", "title" to post.title))) {
-                        scope.launch {
+                    scope.launch {
+                        if (confirmDeletion(t("confirm.deletion", "title" to post.title))) {
                             Mogul.blogs.deletePost(post.id)
                             loadBlog()
                         }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,6 +32,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +46,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -117,9 +120,34 @@ fun ButtonRow(
     )
 }
 
+/** how wide the window is, as base.css's container queries split it: the legends and panels round accordingly */
+enum class LayoutWidth { Mobile, Desktop, Wide }
+
+val LocalLayoutWidth = compositionLocalOf { LayoutWidth.Desktop }
+
+/** the window's width, for the few things the Vue client sized in vw */
+val LocalWindowWidth = compositionLocalOf { 1200.dp }
+
+/** a page's title, as the views' h1: big display type with the browser's h1 margins */
+@Composable
+fun PageTitle(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        modifier = modifier.padding(vertical = 21.dp),
+        color = palette.ink,
+        fontFamily = fonts.display,
+        fontWeight = FontWeight.Bold,
+        fontSize = 32.sp,
+        lineHeight = 35.sp,
+        letterSpacing = (-0.035 * 32).sp,
+    )
+}
+
 /**
- * a fieldset with its legend, as the Vue forms are drawn: a chrome band carrying the title,
- * and the fields on the panel color below it. actions sit at the right of the legend band.
+ * a fieldset with its legend, as base.css draws a .pure-form legend: a chrome bar that
+ * reaches one gutter left of the fields, rounded where it ends in open space (its right end
+ * on desktop, both ends once the page is centered), and the fields on the page beneath it.
+ * actions are the .toolbar the views put under the legend, e.g. a new-episode plus.
  */
 @Composable
 fun FormSection(
@@ -128,43 +156,79 @@ fun FormSection(
     actions: (@Composable RowScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(Gutter.radius))
-            .background(palette.panelBg),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().background(palette.chrome).padding(horizontal = Gutter.full, vertical = Gutter.third),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                legend,
-                modifier = Modifier.weight(1f),
-                color = palette.chromeInk,
-                fontFamily = fonts.display,
-                fontWeight = FontWeight.Medium,
-                fontSize = TextSize.lg,
+    val shape = when (LocalLayoutWidth.current) {
+        LayoutWidth.Mobile -> RoundedCornerShape(0.dp)
+        LayoutWidth.Desktop -> RoundedCornerShape(topEnd = Gutter.radius, bottomEnd = Gutter.radius)
+        LayoutWidth.Wide -> RoundedCornerShape(Gutter.radius)
+    }
+    Column(modifier = modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+        Text(
+            legend,
+            modifier = Modifier
+                .bleedStart(Gutter.full)
+                .clip(shape)
+                .background(palette.chrome)
+                .padding(start = Gutter.full, end = 2.dp, top = 5.dp, bottom = 5.dp),
+            color = palette.chromeInk,
+            fontFamily = fonts.display,
+            fontWeight = FontWeight.Medium,
+            fontSize = TextSize.base,
+            lineHeight = 24.sp,
+            letterSpacing = (-0.01 * 16).sp,
+        )
+        if (actions != null) {
+            Row(
+                Modifier.padding(vertical = Gutter.half),
+                horizontalArrangement = Arrangement.spacedBy(Gutter.half),
+                verticalAlignment = Alignment.CenterVertically,
+                content = actions,
             )
-            if (actions != null) {
-                Row(horizontalArrangement = Arrangement.spacedBy(Gutter.half), verticalAlignment = Alignment.CenterVertically, content = actions)
-            }
         }
         Column(
-            modifier = Modifier.fillMaxWidth().padding(Gutter.full),
+            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
             verticalArrangement = Arrangement.spacedBy(Gutter.half),
             content = content,
         )
     }
 }
 
-/** a field's label; a required one carries a red asterisk */
+/** widens a full-width element by [amount] and shifts it that far left, as a negative left offset with a wider width */
+fun Modifier.bleedStart(amount: Dp): Modifier = this.layout { measurable, constraints ->
+    val extra = amount.roundToPx()
+    val width = constraints.maxWidth + extra
+    val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
+    layout(constraints.maxWidth, placeable.height) { placeable.place(-extra, 0) }
+}
+
+/** a heading inside a form, as .form-section-title: a rule above, then the title in display type */
 @Composable
-fun FieldLabel(text: String, modifier: Modifier = Modifier, required: Boolean = false) {
-    Row(modifier = modifier) {
-        Text(text, color = palette.label, fontWeight = FontWeight.SemiBold, fontSize = TextSize.sm)
-        if (required) Text(" *", color = palette.danger, fontWeight = FontWeight.SemiBold, fontSize = TextSize.sm)
+fun FormSectionTitle(text: String, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth().padding(vertical = Gutter.full)) {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(palette.rule))
+        Text(
+            text,
+            modifier = Modifier.padding(top = 20.dp, bottom = 5.dp),
+            color = palette.ink,
+            fontFamily = fonts.display,
+            fontWeight = FontWeight.Bold,
+            fontSize = TextSize.lg,
+            letterSpacing = (-0.02 * 20).sp,
+        )
     }
+}
+
+/**
+ * a field's label, as a .pure-form label: the body face, capitalized. the Vue forms mark no
+ * field as required, so neither does this; the parameter stays for the callers that say so
+ */
+@Composable
+fun FieldLabel(text: String, modifier: Modifier = Modifier, @Suppress("UNUSED_PARAMETER") required: Boolean = false) {
+    Text(
+        text.replaceFirstChar { it.uppercase() },
+        modifier = modifier.padding(bottom = 4.dp),
+        color = palette.ink,
+        fontSize = TextSize.base,
+    )
 }
 
 /** a short, muted explanation under a field, as a .pure-form-message */

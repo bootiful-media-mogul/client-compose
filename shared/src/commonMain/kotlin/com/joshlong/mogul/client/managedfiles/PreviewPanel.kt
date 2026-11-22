@@ -111,7 +111,7 @@ fun PreviewPanel(modifier: Modifier = Modifier) {
     val previewing = PreviewStore.previewing ?: return
     val context = LocalPlatformContext.current
     val imageLoader = remember(context) {
-        ImageLoader.Builder(context).components { add(KtorNetworkFetcherFactory()) }.build()
+        ImageLoader.Builder(context).components { add(KtorNetworkFetcherFactory(httpClient = { Mogul.http })) }.build()
     }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.half)) {
         if (previewing.isImage) {

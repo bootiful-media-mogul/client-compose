@@ -1,5 +1,6 @@
 package com.joshlong.mogul.client.settings
 
+import com.joshlong.mogul.client.ui.PageTitle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -81,7 +82,7 @@ fun SettingsScreen() {
     LaunchedEffect(Unit) { reload() }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
-        Text(t("settings.title"), style = MaterialTheme.typography.headlineMedium, color = palette.ink)
+        PageTitle(t("settings.title"))
         AppearanceSettings()
         pages.forEach { page ->
             val plugin = label(page.category, "title")

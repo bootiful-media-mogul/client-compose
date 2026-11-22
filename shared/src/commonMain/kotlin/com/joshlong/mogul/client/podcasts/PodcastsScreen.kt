@@ -85,8 +85,6 @@ fun PodcastsScreen() {
                         MogulIcon.Plus,
                         t("icons.new-podcast"),
                         onClick = { scope.launchSafely { editPodcast(Mogul.podcasts.create("")) } },
-                        tint = palette.chromeInk,
-                        hoverTint = palette.brand,
                     )
                 },
             ) {
@@ -96,8 +94,8 @@ fun PodcastsScreen() {
                         deletable = all.size != 1,
                         onEdit = { scope.launchSafely { editPodcast(podcast) } },
                         onDelete = {
-                            if (confirmDeletion(t("confirm.deletion", "title" to podcast.title))) {
-                                scope.launchSafely {
+                            scope.launchSafely {
+                                if (confirmDeletion(t("confirm.deletion", "title" to podcast.title))) {
                                     Mogul.podcasts.deletePodcast(podcast.id)
                                     refresh()
                                 }
