@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         AndroidApp.attach(this)
-        // back goes back a page in the studio, and leaves it from the first one
+        // 'back' goes back a page in the studio, and leaves it from the first one
         this.onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (!navigateBack()) {
@@ -48,7 +48,8 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun needsLocalNetwork(): Boolean {
-        val requested = this.packageManager.getPackageInfo(this.packageName, PackageManager.GET_PERMISSIONS).requestedPermissions.orEmpty()
+        val requested = this.packageManager.getPackageInfo(this.packageName, PackageManager.GET_PERMISSIONS)
+            .requestedPermissions.orEmpty()
         return this.localNetwork in requested && this.checkSelfPermission(this.localNetwork) != PackageManager.PERMISSION_GRANTED
     }
 

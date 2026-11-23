@@ -63,7 +63,8 @@ fun PodcastEpisodesScreen(podcastId: Long) {
                     t("icons.new-episode"),
                     onClick = {
                         scope.launchSafely {
-                            val episode = Mogul.podcasts.createPodcastEpisodeDraft(podcastId, "", "")
+                            val episode =
+                                Mogul.podcasts.createPodcastEpisodeDraft(podcastId, "", "")
                             Router.push(Route.PodcastEpisode(podcastId, episode.id))
                         }
                     },
@@ -96,12 +97,19 @@ fun PodcastEpisodesScreen(podcastId: Long) {
 private fun EpisodeResult(episode: PodcastEpisode, onEdit: () -> Unit, onDelete: () -> Unit) {
     Column(Modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(palette.rule))
-        Row(Modifier.fillMaxWidth().padding(vertical = Gutter.half), horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = Gutter.half),
+            horizontalArrangement = Arrangement.spacedBy(Gutter.half)
+        ) {
             Icon(MogulIcon.Podcast, null, size = 48.dp, tint = palette.ink.copy(alpha = 0.3f))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
                 if (episode.title.isNotBlank()) Text(episode.title, color = palette.ink)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(MogulIcon.Edit, t("icons.edit", "name" to episode.title), onClick = onEdit)
+                    IconButton(
+                        MogulIcon.Edit,
+                        t("icons.edit", "name" to episode.title),
+                        onClick = onEdit
+                    )
                     Text(
                         dateTimeToString(episode.created) ?: "",
                         modifier = Modifier.weight(1f).padding(end = Gutter.half),
@@ -109,8 +117,16 @@ private fun EpisodeResult(episode: PodcastEpisode, onEdit: () -> Unit, onDelete:
                         textAlign = TextAlign.End,
                     )
                     Box(Modifier.size(1.dp, 20.dp).background(palette.rule))
-                    Text("#${episode.id}", modifier = Modifier.weight(1f).padding(start = Gutter.half), color = palette.ink)
-                    IconButton(MogulIcon.Delete, t("icons.delete", "name" to episode.title), onClick = onDelete)
+                    Text(
+                        "#${episode.id}",
+                        modifier = Modifier.weight(1f).padding(start = Gutter.half),
+                        color = palette.ink
+                    )
+                    IconButton(
+                        MogulIcon.Delete,
+                        t("icons.delete", "name" to episode.title),
+                        onClick = onDelete
+                    )
                 }
             }
         }

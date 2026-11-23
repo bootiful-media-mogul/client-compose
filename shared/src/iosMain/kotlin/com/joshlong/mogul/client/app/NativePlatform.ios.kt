@@ -7,7 +7,6 @@ import com.russhwolf.settings.KeychainSettings
 import com.russhwolf.settings.set
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
