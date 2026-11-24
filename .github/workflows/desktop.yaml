@@ -1,0 +1,107 @@
+name: Desktop
+
+# the desktop app's installers, for a github release: push a tag like v1.2.3 and this packages
+# 1.2.3 (bin/desktop.sh) on each system jpackage needs to run on, then attaches them all to the
+# release for that tag, making the release if there isn't one. run it by hand to package a
+# version without a tag; it then keeps the installers with the run instead.
+#
+# secrets, for macos (without them, the dmgs are unsigned and gatekeeper won't open them):
+#   MAC_CERTIFICATE                      a developer id application certificate with its private
+#                                        key: a .p12, base64 encoded
+#   MAC_CERTIFICATE_PASSWORD             the .p12's password
+#   MAC_SIGNING_IDENTITY                 the certificate's name, as keychain access shows it
+#   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY   the app store connect api key, which notarizes them
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'The version to package, like 1.2.3'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Package (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS, Apple silicon
+            runner: macos-26
+          - name: macOS, Intel
+            runner: macos-26-intel
+          - name: Windows
+            runner: windows-latest
+          - name: Linux
+            runner: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    env:
+      DESKTOP_VERSION: ${{ inputs.version || github.ref_name }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY: ${{ secrets.ASC_KEY }}
+      # only to ask, below, whether there is one
+      HAS_MAC_CERTIFICATE: ${{ secrets.MAC_CERTIFICATE != '' }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Import the signing certificate
+        if: ${{ runner.os == 'macOS' && env.HAS_MAC_CERTIFICATE == 'true' }}
+        env:
+          CERTIFICATE: ${{ secrets.MAC_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MAC_CERTIFICATE_PASSWORD }}
+        run: .github/workflows/import-certificate.sh
+
+      - name: Package
+        env:
+          # bin/desktop.sh signs, and then notarizes, only when there's an identity to sign with
+          MAC_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && env.HAS_MAC_CERTIFICATE == 'true' && secrets.MAC_SIGNING_IDENTITY || '' }}
+        run: |
+          # the tag is v1.2.3; bin/desktop.sh takes 1.2.3
+          export DESKTOP_VERSION="${DESKTOP_VERSION#v}"
+          [ -z "${KEYCHAIN:-}" ] || export MAC_SIGNING_KEYCHAIN="$KEYCHAIN"
+          bin/desktop.sh
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: desktop-${{ matrix.runner }}
+          path: desktopApp/build/release/*
+          if-no-files-found: error
+
+  release:
+    name: Attach to the release
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: desktop-*
+          path: installers
+          merge-multiple: true
+
+      - name: Attach the installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create "$TAG" -R "$GITHUB_REPOSITORY" --title "Mogul Studio ${TAG#v}" --generate-notes
+          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber installers/*

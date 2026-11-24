@@ -23,7 +23,9 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Mogul Studio"
-            packageVersion = "1.0.0"
+            // bin/desktop.sh sets it for a release. a dmg wants its first number above 0, and an
+            // msi wants each of the three no higher than 255.255.65535
+            packageVersion = providers.gradleProperty("mogul.version").orNull ?: "1.0.0"
             macOS {
                 bundleID = "com.joshlong.mogul.studio"
             }
