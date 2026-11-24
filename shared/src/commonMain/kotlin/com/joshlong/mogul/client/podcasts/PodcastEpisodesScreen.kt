@@ -53,7 +53,7 @@ fun PodcastEpisodesScreen(podcastId: Long) {
         runCatching { loadPodcast() }.onFailure { println("podcasts: ${it.message}") }
     }
 
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
         PageTitle(t("podcasts.episodes"))
         FormSection(
             t("podcasts.episodes.title", "title" to (podcast?.title ?: "")),

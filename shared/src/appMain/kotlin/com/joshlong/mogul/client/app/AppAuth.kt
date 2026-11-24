@@ -53,9 +53,14 @@ internal object AppAuth {
 
     suspend fun signIn() {
         if (this.oidc.discoverDocument == null) this.oidc.discover()
-        // auth0 only issues a token the api can verify when it's asked for the audience
+        // auth0 only issues a token the api can verify when it's asked for the audience. prompt=login:
+        // the browser may still have an auth0 session, and without it auth0 would quietly reuse that
+        // session's provider instead of letting the user pick another
         val response = NativePlatform.authFlows.createAuthFlow(this.oidc)
-            .getAccessToken(configureAuthUrl = { parameters.append("audience", this@AppAuth.config.auth0Audience) })
+            .getAccessToken(configureAuthUrl = {
+                parameters.append("audience", this@AppAuth.config.auth0Audience)
+                parameters.append("prompt", "login")
+            })
         this.tokens.saveTokens(response)
         // the bearer plugin remembers the tokens it last loaded, which until now were none
         Mogul.http.clearTokens()
@@ -64,5 +69,7 @@ internal object AppAuth {
     suspend fun signOut() {
         this.tokens.removeTokens()
         Mogul.http.clearTokens()
+        // the session auth0 keeps in the system browser outlives the tokens: end it there too
+        NativePlatform.openUrl(this.config.auth0Domain + "v2/logout")
     }
 }

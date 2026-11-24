@@ -147,7 +147,7 @@ fun PodcastEpisodeEditorScreen(podcastId: Long, episodeId: Long) {
     val minOrder = segments.minOfOrNull { it.order }
     val maxOrder = segments.maxOfOrNull { it.order }
 
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
         PageTitle(t("podcasts.episodes.episode"))
         val legend = buildString {
             append(if (title.isNotEmpty()) t("podcasts.episodes.episode.editing", "id" to draftId, "title" to title) else t("podcasts.episodes.new-episode"))

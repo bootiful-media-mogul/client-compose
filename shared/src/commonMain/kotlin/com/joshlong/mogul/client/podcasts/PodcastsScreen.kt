@@ -69,7 +69,7 @@ fun PodcastsScreen() {
         }.onFailure { println("podcasts: ${it.message}") }
     }
 
-    Column {
+    Column(verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
         PageTitle(t("podcasts.title"))
         val editing = draftPodcast
         if (editing != null) {
