@@ -162,7 +162,16 @@ jobs:
             gh release create "$tag" -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
               --title "Mogul Studio $VERSION" --generate-notes
           gh release upload "$tag" -R "$GITHUB_REPOSITORY" --clobber installers/*
-          gh release edit "$tag" -R "$GITHUB_REPOSITORY" --latest
+          # latest only if nothing's newer: a rerun of an older run mustn't take it from a newer
+          # release, or the desktop app would offer people the older one (UpdateNotice)
+          newest="$(gh release list -R "$GITHUB_REPOSITORY" --limit 10000 --json tagName --jq '.[].tagName' |
+            { grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true; } | sort -t. -k1.2,1n -k2,2n -k3,3n | tail -n 1)"
+          if [ "$newest" = "$tag" ]; then
+            gh release edit "$tag" -R "$GITHUB_REPOSITORY" --latest
+          else
+            gh release edit "$tag" -R "$GITHUB_REPOSITORY" --latest=false
+            echo "$newest is newer than $tag, so it stays the latest"
+          fi
           echo "released $tag: https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag"
 
       # each major version keeps its first release and its newest five
