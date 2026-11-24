@@ -1,9 +1,13 @@
 name: Desktop
 
-# the desktop app's installers, for a github release: push a tag like v1.2.3 and this packages
-# 1.2.3 (bin/desktop.sh) on each system jpackage needs to run on, then attaches them all to the
-# release for that tag, making the release if there isn't one. run it by hand to package a
-# version without a tag; it then keeps the installers with the run instead.
+# the desktop app's installers, as a github release. every push to main that touches the app
+# packages a new version (bin/desktop.sh) on each system jpackage needs to run on, then makes a
+# release of them all, tagged for that version and marked latest, so .../releases/latest is
+# always the newest build. the version is desktop.version's first two numbers in app.properties
+# and the run number: 1.0.37. change desktop.version to start 1.1.
+#
+# to release a version of your choosing, push a tag like v1.2.3, or run this by hand with one.
+# nothing is released unless every installer built.
 #
 # secrets, for macos (without them, the dmgs are unsigned and gatekeeper won't open them):
 #   MAC_CERTIFICATE                      a developer id application certificate with its private
@@ -14,19 +18,63 @@ name: Desktop
 
 on:
   push:
+    branches: [ main ]
+    # path filters don't apply to tags: a tag always releases
     tags: [ 'v*' ]
+    paths-ignore:
+      - 'androidApp/**'
+      - 'iosApp/**'
+      - 'webApp/**'
+      - '**.md'
+      - '.github/workflows/android.yaml'
+      - '.github/workflows/ios.yaml'
+      - '.github/workflows/web.yaml'
+      - '.github/workflows/build-container.sh'
+      - '.github/workflows/nginx-buildpack-config/**'
   workflow_dispatch:
     inputs:
       version:
-        description: 'The version to package, like 1.2.3'
-        required: true
+        description: 'The version to release, like 1.2.3 (the next build number otherwise)'
+        required: false
+
+# one release at a time, so they're made in the order they were pushed
+concurrency:
+  group: desktop
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
+  version:
+    name: Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Choose the version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          if [ -n "$INPUT_VERSION" ]; then
+            version="${INPUT_VERSION#v}"
+          elif [ "$GITHUB_REF_TYPE" = tag ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            source bin/common.sh
+            base="$(prop desktop.version)"
+            version="${base%.*}.$RUN_NUMBER"
+          fi
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+          echo "releasing $version"
+
   package:
     name: Package (${{ matrix.name }})
+    needs: version
     strategy:
       fail-fast: false
       matrix:
@@ -41,7 +89,7 @@ jobs:
             runner: ubuntu-latest
     runs-on: ${{ matrix.runner }}
     env:
-      DESKTOP_VERSION: ${{ inputs.version || github.ref_name }}
+      DESKTOP_VERSION: ${{ needs.version.outputs.version }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       ASC_KEY: ${{ secrets.ASC_KEY }}
@@ -72,8 +120,6 @@ jobs:
           # bin/desktop.sh signs, and then notarizes, only when there's an identity to sign with
           MAC_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && env.HAS_MAC_CERTIFICATE == 'true' && secrets.MAC_SIGNING_IDENTITY || '' }}
         run: |
-          # the tag is v1.2.3; bin/desktop.sh takes 1.2.3
-          export DESKTOP_VERSION="${DESKTOP_VERSION#v}"
           [ -z "${KEYCHAIN:-}" ] || export MAC_SIGNING_KEYCHAIN="$KEYCHAIN"
           bin/desktop.sh
 
@@ -84,9 +130,8 @@ jobs:
           if-no-files-found: error
 
   release:
-    name: Attach to the release
-    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-    needs: package
+    name: Release
+    needs: [ version, package ]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -97,11 +142,17 @@ jobs:
           path: installers
           merge-multiple: true
 
-      - name: Attach the installers
+      # a tag the workflow's own token makes starts no other run, so this doesn't loop. the
+      # release may already be there: a tag someone pushed with one, or a rerun of this
+      - name: Release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
-          gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
-            gh release create "$TAG" -R "$GITHUB_REPOSITORY" --title "Mogul Studio ${TAG#v}" --generate-notes
-          gh release upload "$TAG" -R "$GITHUB_REPOSITORY" --clobber installers/*
+          tag="v$VERSION"
+          gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 ||
+            gh release create "$tag" -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "Mogul Studio $VERSION" --generate-notes
+          gh release upload "$tag" -R "$GITHUB_REPOSITORY" --clobber installers/*
+          gh release edit "$tag" -R "$GITHUB_REPOSITORY" --latest
+          echo "released $tag: https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag"
