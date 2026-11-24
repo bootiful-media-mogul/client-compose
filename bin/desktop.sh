@@ -70,6 +70,12 @@ built="$(find "$module/build/compose/binaries/main/$format" -name "*.$format" | 
 [ -f "$built" ] || { echo "the build made no .$format in $module/build/compose/binaries/main/$format" >&2; exit 1; }
 
 if [ -n "$sign" ]; then
+  # jpackage signs the app but not the dmg around it: sign that too, so gatekeeper can vouch
+  # for the dmg itself before it's opened
+  keychain=()
+  [ -z "${MAC_SIGNING_KEYCHAIN:-}" ] || keychain=(--keychain "$MAC_SIGNING_KEYCHAIN")
+  codesign --force --timestamp --sign "$MAC_SIGNING_IDENTITY" ${keychain[@]+"${keychain[@]}"} "$built"
+
   # apple checks the app for malware and that it's signed properly, then the dmg carries its
   # ticket, so gatekeeper needn't ask apple when it first opens
   echo "notarizing $built"
