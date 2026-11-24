@@ -22,6 +22,10 @@ private val composeMessages: Map<String, String> = mapOf(
     "app.sign-in.prompt" to "Sign in to Mogul to reach your podcasts, blogs, and notes.",
     "app.sign-in.failed" to "Signing in didn't work: {message}",
     "app.sign-out" to "Sign out",
+    // the desktop app, when there's a newer release than it
+    "updates.available" to "Mogul Studio {latest} is out. This is {current}.",
+    "updates.download" to "Download",
+    "updates.later" to "Later",
 )
 
 private fun message(key: String): String? = englishMessages[key] ?: composeMessages[key]

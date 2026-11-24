@@ -20,6 +20,14 @@ kotlin {
 compose.desktop {
     application {
         mainClass = "com.joshlong.mogul.client.desktop.MainKt"
+        // a release knows its version, and asks github for the latest release as it opens
+        // (UpdateNotice). run from gradle without a version, it doesn't ask
+        providers.gradleProperty("mogul.version").orNull?.let { version ->
+            jvmArgs += listOf(
+                "-Dmogul.version=$version",
+                "-Dmogul.releases=https://api.github.com/repos/bootiful-media-mogul/studio-compose/releases/latest",
+            )
+        }
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "Mogul Studio"
