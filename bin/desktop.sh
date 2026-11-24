@@ -78,7 +78,8 @@ if [ -n "$sign" ]; then
   xcrun stapler staple "$built"
 fi
 
-name="$(tr '[:upper:] ' '[:lower:]-' <<<"$(basename "$built" ".$format" | sed "s/-$version\$//")")"
+# jpackage names a .deb name_version_arch, and the others name-version: keep only the name
+name="$(tr '[:upper:] ' '[:lower:]-' <<<"$(basename "$built" ".$format" | sed "s/[-_]$version\([-_].*\)\{0,1\}\$//")")"
 out="$module/build/release"
 rm -rf "$out"
 mkdir -p "$out"
