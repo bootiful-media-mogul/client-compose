@@ -139,9 +139,9 @@ fun PageTitle(text: String, modifier: Modifier = Modifier) {
 
 /**
  * a fieldset with its legend, as base.css draws a .pure-form legend: a chrome bar that
- * reaches one gutter left of the fields (and one gutter right too on mobile, so it spans the
- * window), rounded where it ends in open space (its right end on desktop, both ends once the
- * page is centered), and the fields on the page beneath it.
+ * reaches one gutter left of the fields, so they sit inset under it (and one gutter right too on
+ * mobile, so it spans the window), rounded at both ends wherever the page keeps a margin to the
+ * window's edges, which is everywhere but mobile, and the fields on the page beneath it.
  * actions are the .toolbar the views put under the legend, e.g. a new-episode plus.
  */
 @Composable
@@ -152,11 +152,7 @@ fun FormSection(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val layoutWidth = LocalLayoutWidth.current
-    val shape = when (layoutWidth) {
-        LayoutWidth.Mobile -> RoundedCornerShape(0.dp)
-        LayoutWidth.Desktop -> RoundedCornerShape(topEnd = Gutter.radius, bottomEnd = Gutter.radius)
-        LayoutWidth.Wide -> RoundedCornerShape(Gutter.radius)
-    }
+    val shape = if (layoutWidth == LayoutWidth.Mobile) RoundedCornerShape(0.dp) else RoundedCornerShape(Gutter.radius)
     Column(modifier = modifier.fillMaxWidth().padding(bottom = 12.dp)) {
         Text(
             legend,

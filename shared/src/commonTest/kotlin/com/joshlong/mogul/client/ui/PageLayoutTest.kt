@@ -25,9 +25,8 @@ class PageLayoutTest {
     }
 
     @Test
-    fun theLayoutIsWideExactlyWhenThePageIsCentered() {
-        // at the page's width it still meets both window edges; any wider and it floats
-        assertEquals(LayoutWidth.Desktop, PageLayout.widthFor(PageLayout.maxWidth, tall))
-        assertEquals(LayoutWidth.Wide, PageLayout.widthFor(PageLayout.maxWidth + 1.dp, tall))
+    fun windowsWiderThanThePageAreStillDesktop() {
+        // past the page's width it's centered, but laid out just as it is at any desktop width
+        assertEquals(LayoutWidth.Desktop, PageLayout.widthFor(PageLayout.maxWidth + 1.dp, tall))
     }
 }

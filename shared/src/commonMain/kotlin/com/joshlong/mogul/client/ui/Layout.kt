@@ -25,16 +25,13 @@ object PageLayout {
     /** the desktop sidebar's panels, beside the page */
     val sidebarWidth: Dp = 400.dp
 
-    /** how a window this size lays out: wide exactly when the page is centered, so its edges end in open space */
-    fun widthFor(windowWidth: Dp, windowHeight: Dp): LayoutWidth = when {
-        windowWidth < this.mobileBelow || windowHeight < this.mobileShorterThan -> LayoutWidth.Mobile
-        windowWidth <= this.maxWidth -> LayoutWidth.Desktop
-        else -> LayoutWidth.Wide
-    }
+    /** how a window this size lays out: mobile's when it's narrow or short, the desktop's otherwise, however wide */
+    fun widthFor(windowWidth: Dp, windowHeight: Dp): LayoutWidth =
+        if (windowWidth < this.mobileBelow || windowHeight < this.mobileShorterThan) LayoutWidth.Mobile else LayoutWidth.Desktop
 }
 
 /** how wide the window is, as [PageLayout.widthFor] splits it: the legends and panels round accordingly */
-enum class LayoutWidth { Mobile, Desktop, Wide }
+enum class LayoutWidth { Mobile, Desktop }
 
 val LocalLayoutWidth = compositionLocalOf { LayoutWidth.Desktop }
 

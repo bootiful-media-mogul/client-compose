@@ -243,7 +243,8 @@ private fun RouteContent(route: Route) {
 }
 
 /**
- * the desktop page, as App.vue's grid: the top bar, then the view beside a 400-wide sidebar.
+ * the desktop page, as App.vue's grid: the top bar, then the view beside a 400-wide sidebar,
+ * a gutter in from the window's edges, so the legends and panels end in open space at any width.
  * the view starts a gutter and a half under the bar (the room the section names drop into)
  * plus a gutter; the sidebar's panels sit a gutter higher than that.
  */
@@ -252,7 +253,10 @@ private fun DesktopLayout(user: User, route: Route, onSearch: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         // over the page, which the section names' tabs drop onto
         TopBar(user, route, onSearch, Modifier.zIndex(1f))
-        Row(Modifier.align(Alignment.CenterHorizontally).widthIn(max = PageLayout.maxWidth).fillMaxSize().windowInsetsPadding(underTheBottom)) {
+        Row(
+            Modifier.align(Alignment.CenterHorizontally).widthIn(max = PageLayout.maxWidth).fillMaxSize().windowInsetsPadding(underTheBottom)
+                .padding(horizontal = Gutter.full),
+        ) {
             Column(
                 Modifier.weight(1f).fillMaxSize().verticalScroll(rememberScrollState())
                     .padding(start = Gutter.full, end = Gutter.full, top = 40.dp, bottom = 48.dp),
@@ -276,8 +280,7 @@ private fun DesktopLayout(user: User, route: Route, onSearch: () -> Unit) {
  * one of the sidebar's panels (PanelComponent.vue): a chrome title bar in spaced capitals
  * with a toggle, collapsed on arrival (three expanded panels push the page long before
  * you've asked for any of them), and opened when something asks for it, e.g. a preview
- * link. it meets the window's right edge, so only its left corners round, until the page
- * is centered and it ends in open space.
+ * link. it ends a gutter short of the window's right edge, so all its corners round.
  */
 @Composable
 private fun SidebarPanelFrame(panel: SidebarPanel, title: String, icon: MogulIcon, content: @Composable () -> Unit) {
@@ -285,8 +288,7 @@ private fun SidebarPanelFrame(panel: SidebarPanel, title: String, icon: MogulIco
     LaunchedEffect(panel) {
         Events.events.collect { if (it is AppEvent.SidebarPanelOpened && it.panel == panel) visible = true }
     }
-    val shape = if (LocalLayoutWidth.current == LayoutWidth.Wide) RoundedCornerShape(Gutter.radius)
-    else RoundedCornerShape(topStart = Gutter.radius, bottomStart = Gutter.radius)
+    val shape = RoundedCornerShape(Gutter.radius)
     Column(
         Modifier
             .fillMaxWidth()
