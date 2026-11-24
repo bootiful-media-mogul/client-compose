@@ -28,7 +28,7 @@ val appConfig = mapOf(
     // the auth0 api that stands for mogul's api; the api and the gateway check tokens are for it
     "auth0Audience" to mogulProperty("mogul.auth0.audience", "https://api.mogul.tools"),
     // where auth0 sends the phone and tablet apps back to: a scheme they register
-    "redirectUri" to mogulProperty("mogul.redirectUri", "com.joshlong.mogul://callback"),
+    "redirectUri" to mogulProperty("mogul.redirectUri", "com.joshlong.mogul.studio://callback"),
     // the desktop app can't register a scheme while it runs from gradle, so it listens on this
     // machine instead. this must be among the auth0 application's allowed callback URLs
     "desktopRedirectUri" to mogulProperty("mogul.desktopRedirectUri", "http://127.0.0.1:53682/callback"),
@@ -169,4 +169,10 @@ androidComponents {
     onVariants { variant ->
         variant.manifestPlaceholders.put("oidcRedirectScheme", appConfig.getValue("redirectUri").substringBefore(":"))
     }
+}
+
+// pinned, so Res doesn't move when the project is renamed: compose otherwise derives its
+// package from the root project's name
+compose.resources {
+    packageOfResClass = "com.joshlong.mogul.client.resources"
 }

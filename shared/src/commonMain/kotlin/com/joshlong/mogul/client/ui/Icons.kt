@@ -24,8 +24,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.joshlong.mogul.client.theme.palette
-import mogulweb.shared.generated.resources.Res
-import mogulweb.shared.generated.resources.*
+import com.joshlong.mogul.client.resources.Res
+import com.joshlong.mogul.client.resources.*
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 

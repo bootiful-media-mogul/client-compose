@@ -15,15 +15,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import mogulweb.shared.generated.resources.Res
-import mogulweb.shared.generated.resources.ibmplexmono_medium
-import mogulweb.shared.generated.resources.ibmplexmono_regular
-import mogulweb.shared.generated.resources.ibmplexsans_italic
-import mogulweb.shared.generated.resources.ibmplexsans_medium
-import mogulweb.shared.generated.resources.ibmplexsans_regular
-import mogulweb.shared.generated.resources.ibmplexsans_semibold
-import mogulweb.shared.generated.resources.spacegrotesk_bold
-import mogulweb.shared.generated.resources.spacegrotesk_medium
+import com.joshlong.mogul.client.resources.Res
+import com.joshlong.mogul.client.resources.ibmplexmono_medium
+import com.joshlong.mogul.client.resources.ibmplexmono_regular
+import com.joshlong.mogul.client.resources.ibmplexsans_italic
+import com.joshlong.mogul.client.resources.ibmplexsans_medium
+import com.joshlong.mogul.client.resources.ibmplexsans_regular
+import com.joshlong.mogul.client.resources.ibmplexsans_semibold
+import com.joshlong.mogul.client.resources.spacegrotesk_bold
+import com.joshlong.mogul.client.resources.spacegrotesk_medium
 import org.jetbrains.compose.resources.Font
 
 /** the base.css spacing: everything is a multiple of the 12pt gutter */

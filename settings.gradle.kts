@@ -1,4 +1,4 @@
-rootProject.name = "MogulWeb"
+rootProject.name = "studio-compose"
 
 pluginManagement {
     repositories {

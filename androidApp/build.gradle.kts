@@ -28,7 +28,7 @@ val localProperties = Properties().apply {
 }
 val redirectUri = providers.gradleProperty("mogul.redirectUri").orNull
     ?: localProperties.getProperty("mogul.redirectUri")
-    ?: "com.joshlong.mogul://callback"
+    ?: "com.joshlong.mogul.studio://callback"
 
 android {
     namespace = "com.joshlong.mogul.client.android"

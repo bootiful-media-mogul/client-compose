@@ -32,11 +32,11 @@ import com.joshlong.mogul.client.ui.ListenForNotification
 import com.joshlong.mogul.client.ui.MogulButton
 import com.joshlong.mogul.client.ui.MogulIcon
 import com.joshlong.mogul.client.ui.MogulSelect
-import mogulweb.shared.generated.resources.Res
-import mogulweb.shared.generated.resources.pub_download_blog_post_as_markdown
-import mogulweb.shared.generated.resources.pub_mock
-import mogulweb.shared.generated.resources.pub_publish_to_podbean
-import mogulweb.shared.generated.resources.pub_wordpress_og
+import com.joshlong.mogul.client.resources.Res
+import com.joshlong.mogul.client.resources.pub_download_blog_post_as_markdown
+import com.joshlong.mogul.client.resources.pub_mock
+import com.joshlong.mogul.client.resources.pub_publish_to_podbean
+import com.joshlong.mogul.client.resources.pub_wordpress_og
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import kotlinx.coroutines.launch
