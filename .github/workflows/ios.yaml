@@ -39,7 +39,9 @@ permissions:
 jobs:
   testflight:
     name: Upload to TestFlight
-    runs-on: macos-26
+    # the larger apple silicon runner (5 cores, 14gb): linking kotlin/native for release is
+    # most of the job, and it wants the cores and the memory
+    runs-on: macos-26-xlarge
     timeout-minutes: 90
     env:
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
@@ -56,6 +58,14 @@ jobs:
           java-version: '21'
 
       - uses: gradle/actions/setup-gradle@v6
+
+      # gradle.properties sizes the gradle daemon, which is where kotlin/native compiles and
+      # links, for a laptop. the gradle home's gradle.properties wins over the project's, so
+      # this gives it the runner's memory instead, leaving the rest for xcode
+      - name: Size the gradle daemon for the runner
+        run: |
+          echo 'org.gradle.jvmargs=-Xmx7g -Dfile.encoding=UTF-8' \
+            >>"${GRADLE_USER_HOME:-$HOME/.gradle}/gradle.properties"
 
       # kotlin/native's compiler and its dependencies, which gradle's cache doesn't hold
       - uses: actions/cache@v6
