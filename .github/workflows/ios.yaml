@@ -25,6 +25,7 @@ on:
       - '.github/workflows/android.yaml'
       - '.github/workflows/web.yaml'
       - '.github/workflows/desktop.yaml'
+      - '.github/workflows/prune-releases.sh'
       - '.github/workflows/build-container.sh'
       - '.github/nginx-buildpack-config/**'
   workflow_dispatch:

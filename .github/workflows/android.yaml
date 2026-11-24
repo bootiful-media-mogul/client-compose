@@ -21,6 +21,7 @@ on:
       - '.github/workflows/ios.yaml'
       - '.github/workflows/web.yaml'
       - '.github/workflows/desktop.yaml'
+      - '.github/workflows/prune-releases.sh'
       - '.github/workflows/build-container.sh'
       - '.github/workflows/import-certificate.sh'
       - '.github/nginx-buildpack-config/**'

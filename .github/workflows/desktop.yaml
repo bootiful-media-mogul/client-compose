@@ -7,7 +7,8 @@ name: Desktop
 # and the run number: 1.0.37. change desktop.version to start 1.1.
 #
 # to release a version of your choosing, push a tag like v1.2.3, or run this by hand with one.
-# nothing is released unless every installer built.
+# nothing is released unless every installer built. each major version keeps its first release
+# and its newest five; the rest are deleted (prune-releases.sh).
 #
 # secrets, for macos (without them, the dmgs are unsigned and gatekeeper won't open them):
 #   MAC_CERTIFICATE                      a developer id application certificate with its private
@@ -141,6 +142,8 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
+
       - uses: actions/download-artifact@v8
         with:
           pattern: desktop-*
@@ -161,3 +164,9 @@ jobs:
           gh release upload "$tag" -R "$GITHUB_REPOSITORY" --clobber installers/*
           gh release edit "$tag" -R "$GITHUB_REPOSITORY" --latest
           echo "released $tag: https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag"
+
+      # each major version keeps its first release and its newest five
+      - name: Prune old releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/workflows/prune-releases.sh

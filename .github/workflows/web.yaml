@@ -20,6 +20,7 @@ on:
       - '.github/workflows/android.yaml'
       - '.github/workflows/ios.yaml'
       - '.github/workflows/desktop.yaml'
+      - '.github/workflows/prune-releases.sh'
   workflow_dispatch:
 
 concurrency:
