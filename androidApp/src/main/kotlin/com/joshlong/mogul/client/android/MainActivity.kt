@@ -3,14 +3,11 @@ package com.joshlong.mogul.client.android
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.ui.Modifier
 import com.joshlong.mogul.client.App
 import com.joshlong.mogul.client.app.AndroidApp
 import com.joshlong.mogul.client.platform.appBecameVisible
@@ -26,7 +23,9 @@ class MainActivity : ComponentActivity() {
     private val askForLocalNetwork = registerForActivityResult(ActivityResultContracts.RequestPermission()) { this.show() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        // the studio keeps clear of the system bars itself (App.kt), and runs its black top bar
+        // under the status bar, which takes light icons whatever the theme
+        enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
         super.onCreate(savedInstanceState)
         AndroidApp.attach(this)
         // 'back' goes back a page in the studio, and leaves it from the first one
@@ -55,7 +54,7 @@ class MainActivity : ComponentActivity() {
 
     private fun show() {
         this.setContent {
-            Box(Modifier.fillMaxSize().safeDrawingPadding()) { App() }
+            App()
         }
     }
 }

@@ -11,14 +11,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -130,6 +135,17 @@ private val desktopBreak = 900.dp
 private val wideBreak = 1700.dp
 
 private val pageWidth = 1600.dp
+
+// the apps draw to the edges of the screen, so whatever the device keeps for itself (a
+// phone's status bar and notch, its home indicator, a tablet's camera) comes out of the
+// page: the bars' colors run underneath, their contents stay clear. nothing, on the web
+// and the desktop
+private val underTheTop
+    @Composable get() = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
+private val underTheBottom
+    @Composable get() = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
+private val underTheSides
+    @Composable get() = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
 
 @Composable
 fun App() {
@@ -246,7 +262,7 @@ private fun DesktopLayout(user: User, route: Route, onSearch: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         // over the page, which the section names' tabs drop onto
         TopBar(user, route, onSearch, Modifier.zIndex(1f))
-        Row(Modifier.fillMaxSize().widthIn(max = pageWidth).align(Alignment.CenterHorizontally)) {
+        Row(Modifier.fillMaxSize().windowInsetsPadding(underTheBottom).widthIn(max = pageWidth).align(Alignment.CenterHorizontally)) {
             Column(
                 Modifier.weight(1f).fillMaxSize().verticalScroll(rememberScrollState())
                     .padding(start = Gutter.full, end = Gutter.full, top = 40.dp, bottom = 48.dp),
@@ -338,13 +354,14 @@ private fun MobileLayout(user: User, route: Route, onSearch: () -> Unit) {
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             Row(
-                Modifier.fillMaxWidth().background(palette.topbar).padding(horizontal = Gutter.full, vertical = Gutter.half),
+                Modifier.fillMaxWidth().background(palette.topbar).windowInsetsPadding(underTheTop)
+                    .padding(horizontal = Gutter.full, vertical = Gutter.half),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Gutter.half),
             ) {
                 BrandMark(24)
             }
-            Row(Modifier.fillMaxWidth().background(palette.chrome)) {
+            Row(Modifier.fillMaxWidth().background(palette.chrome).windowInsetsPadding(underTheSides)) {
                 tabs.forEachIndexed { index, label ->
                     Text(
                         t(label),
@@ -362,7 +379,8 @@ private fun MobileLayout(user: User, route: Route, onSearch: () -> Unit) {
                 }
             }
             Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Gutter.full).padding(bottom = 96.dp),
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).windowInsetsPadding(underTheBottom)
+                    .padding(Gutter.full).padding(bottom = 96.dp),
             ) {
                 // the page stays composed (hidden, and clipped so nothing of it shows) while
                 // another tab is up, so an editor keeps what you typed; the panels keep their
@@ -379,6 +397,7 @@ private fun MobileLayout(user: User, route: Route, onSearch: () -> Unit) {
         Row(
             Modifier
                 .align(Alignment.BottomCenter)
+                .windowInsetsPadding(underTheBottom)
                 .padding(Gutter.full)
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(Gutter.radius))
@@ -431,7 +450,7 @@ internal fun BrandMark(size: Int) {
  */
 @Composable
 private fun TopBar(user: User, route: Route, onSearch: () -> Unit, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().background(palette.topbar)) {
+    Box(modifier.fillMaxWidth().background(palette.topbar).windowInsetsPadding(underTheTop)) {
         Row(
             Modifier.fillMaxWidth().widthIn(max = pageWidth).align(Alignment.Center).padding(horizontal = 32.dp),
             verticalAlignment = Alignment.CenterVertically,

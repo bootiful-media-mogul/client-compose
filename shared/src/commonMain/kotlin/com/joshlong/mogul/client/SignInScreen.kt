@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +37,7 @@ internal fun SignInScreen(onSignedIn: () -> Unit) {
     var failure by remember { mutableStateOf<String?>(null) }
     Box(Modifier.fillMaxSize().background(palette.topbar), contentAlignment = Alignment.Center) {
         Column(
-            Modifier.widthIn(max = 420.dp).padding(Gutter.full),
+            Modifier.safeDrawingPadding().widthIn(max = 420.dp).padding(Gutter.full),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(Gutter.full),
         ) {

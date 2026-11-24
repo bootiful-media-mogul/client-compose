@@ -8,6 +8,11 @@
 	<!-- the only encryption is https, which ios does: answers app store connect's export compliance question -->
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!-- light status bar text, over the studio's black top bar whatever the theme -->
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<!-- plain http to a gateway running on this machine (http://127.0.0.1:1010); production is https -->

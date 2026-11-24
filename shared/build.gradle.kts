@@ -55,6 +55,10 @@ val generateAppConfig = tasks.register("generateAppConfig") {
 }
 
 kotlin {
+    // NativePlatform is an expect class, which kotlin still calls beta
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
     js {
         browser()
         binaries.executable()
