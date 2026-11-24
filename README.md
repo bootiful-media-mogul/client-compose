@@ -56,7 +56,7 @@ GitHub Actions runs the same scripts, each on the system it needs, and a laptop 
 
 A push that only changes another platform's code doesn't start a run, and every workflow can be run by hand.
 
-* **Web.** The build publishes the `client` image (`composeCompatibilityBrowserDistribution`, served by the nginx buildpack with the config in `.github/workflows/nginx-buildpack-config`), then sends the `pipeline` repository the dispatch that deploys it.
+* **Web.** The build publishes the `client` image (`composeCompatibilityBrowserDistribution`, served by the nginx buildpack with the config in `.github/nginx-buildpack-config`), then sends the `pipeline` repository the dispatch that deploys it.
   `PUBLISH= ROOT_DIR=$PWD IMAGE_NAME=<name> .github/workflows/build-container.sh` builds it into the local Docker daemon instead.
   The Vue client's workflow now runs only by hand, to roll back to it.
   Secrets: `GCLOUD_SA_KEY` and `MOGUL_GITHUB_PERSONAL_ACCESS_TOKEN`, as for the other images.

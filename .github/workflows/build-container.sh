@@ -17,7 +17,7 @@ ls "$dist"/*.wasm >/dev/null 2>&1 || { echo "the build produced no .wasm in $dis
 
 # config.js is answered by nginx at runtime; the copy in the build is only for the dev server
 mkdir -p build/container/public
-cp .github/workflows/nginx-buildpack-config/* build/container
+cp .github/nginx-buildpack-config/* build/container
 cp -r "$dist"/* build/container/public
 rm -f build/container/public/config.js
 cd build/container

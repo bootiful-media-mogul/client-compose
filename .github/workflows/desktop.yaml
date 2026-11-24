@@ -30,7 +30,7 @@ on:
       - '.github/workflows/ios.yaml'
       - '.github/workflows/web.yaml'
       - '.github/workflows/build-container.sh'
-      - '.github/workflows/nginx-buildpack-config/**'
+      - '.github/nginx-buildpack-config/**'
   workflow_dispatch:
     inputs:
       version:
@@ -46,8 +46,13 @@ permissions:
   contents: read
 
 jobs:
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yaml
+
   version:
     name: Version
+    needs: test
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}

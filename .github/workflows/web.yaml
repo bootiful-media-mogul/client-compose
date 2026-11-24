@@ -27,8 +27,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yaml
+
   build-and-deploy:
     name: Build Container
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

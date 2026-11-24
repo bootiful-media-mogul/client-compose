@@ -23,7 +23,7 @@ on:
       - '.github/workflows/desktop.yaml'
       - '.github/workflows/build-container.sh'
       - '.github/workflows/import-certificate.sh'
-      - '.github/workflows/nginx-buildpack-config/**'
+      - '.github/nginx-buildpack-config/**'
   workflow_dispatch:
 
 concurrency:
@@ -34,8 +34,13 @@ permissions:
   contents: read
 
 jobs:
+  test:
+    name: Test
+    uses: ./.github/workflows/test.yaml
+
   play:
     name: Release to Google Play
+    needs: test
     runs-on: ubuntu-latest
     env:
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
