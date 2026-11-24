@@ -26,8 +26,16 @@ compose.desktop {
             // bin/desktop.sh sets it for a release. a dmg wants its first number above 0, and an
             // msi wants each of the three no higher than 255.255.65535
             packageVersion = providers.gradleProperty("mogul.version").orNull ?: "1.0.0"
+            // the logo, as bin/brand.sh makes it for each system
             macOS {
                 bundleID = "com.joshlong.mogul.studio"
+                iconFile.set(project.file("icons/mogul.icns"))
+            }
+            windows {
+                iconFile.set(project.file("icons/mogul.ico"))
+            }
+            linux {
+                iconFile.set(project.file("icons/mogul.png"))
             }
             // ktor's okhttp engine and javafx's media player reach for these at runtime
             modules("java.net.http", "jdk.unsupported", "java.naming")

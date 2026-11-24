@@ -32,7 +32,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -120,14 +119,6 @@ fun ButtonRow(
     )
 }
 
-/** how wide the window is, as base.css's container queries split it: the legends and panels round accordingly */
-enum class LayoutWidth { Mobile, Desktop, Wide }
-
-val LocalLayoutWidth = compositionLocalOf { LayoutWidth.Desktop }
-
-/** the window's width, for the few things the Vue client sized in vw */
-val LocalWindowWidth = compositionLocalOf { 1200.dp }
-
 /** a page's title, as the views' h1: big display type with the browser's h1 margins */
 @Composable
 fun PageTitle(text: String, modifier: Modifier = Modifier) {
@@ -145,8 +136,9 @@ fun PageTitle(text: String, modifier: Modifier = Modifier) {
 
 /**
  * a fieldset with its legend, as base.css draws a .pure-form legend: a chrome bar that
- * reaches one gutter left of the fields, rounded where it ends in open space (its right end
- * on desktop, both ends once the page is centered), and the fields on the page beneath it.
+ * reaches one gutter left of the fields (and one gutter right too on mobile, so it spans the
+ * window), rounded where it ends in open space (its right end on desktop, both ends once the
+ * page is centered), and the fields on the page beneath it.
  * actions are the .toolbar the views put under the legend, e.g. a new-episode plus.
  */
 @Composable
@@ -156,7 +148,8 @@ fun FormSection(
     actions: (@Composable RowScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = when (LocalLayoutWidth.current) {
+    val layoutWidth = LocalLayoutWidth.current
+    val shape = when (layoutWidth) {
         LayoutWidth.Mobile -> RoundedCornerShape(0.dp)
         LayoutWidth.Desktop -> RoundedCornerShape(topEnd = Gutter.radius, bottomEnd = Gutter.radius)
         LayoutWidth.Wide -> RoundedCornerShape(Gutter.radius)
@@ -165,7 +158,7 @@ fun FormSection(
         Text(
             legend,
             modifier = Modifier
-                .bleedStart(Gutter.full)
+                .bleed(start = Gutter.full, end = if (layoutWidth == LayoutWidth.Mobile) Gutter.full else 0.dp)
                 .clip(shape)
                 .background(palette.chrome)
                 .padding(start = Gutter.full, end = 2.dp, top = 5.dp, bottom = 5.dp),
@@ -192,12 +185,12 @@ fun FormSection(
     }
 }
 
-/** widens a full-width element by [amount] and shifts it that far left, as a negative left offset with a wider width */
-fun Modifier.bleedStart(amount: Dp): Modifier = this.layout { measurable, constraints ->
-    val extra = amount.roundToPx()
-    val width = constraints.maxWidth + extra
+/** widens a full-width element by [start] and [end] and shifts it [start] left, as negative left and right margins */
+fun Modifier.bleed(start: Dp, end: Dp = 0.dp): Modifier = this.layout { measurable, constraints ->
+    val left = start.roundToPx()
+    val width = constraints.maxWidth + left + end.roundToPx()
     val placeable = measurable.measure(constraints.copy(minWidth = width, maxWidth = width))
-    layout(constraints.maxWidth, placeable.height) { placeable.place(-extra, 0) }
+    layout(constraints.maxWidth, placeable.height) { placeable.place(-left, 0) }
 }
 
 /** a heading inside a form, as .form-section-title: a rule above, then the title in display type */

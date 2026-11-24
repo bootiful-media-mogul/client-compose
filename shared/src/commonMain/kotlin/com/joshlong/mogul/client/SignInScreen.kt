@@ -23,6 +23,7 @@ import com.joshlong.mogul.client.i18n.t
 import com.joshlong.mogul.client.platform.signIn
 import com.joshlong.mogul.client.theme.Gutter
 import com.joshlong.mogul.client.theme.palette
+import com.joshlong.mogul.client.ui.BrandMark
 import com.joshlong.mogul.client.ui.MogulButton
 import kotlinx.coroutines.launch
 

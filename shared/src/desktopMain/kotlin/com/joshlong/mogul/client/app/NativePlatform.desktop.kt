@@ -1,9 +1,13 @@
 package com.joshlong.mogul.client.app
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.painter.Painter
 import com.joshlong.mogul.client.platform.AudioHandle
+import com.joshlong.mogul.client.resources.Res
+import com.joshlong.mogul.client.resources.mogul_logo
 import com.russhwolf.settings.PreferencesSettings
 import com.russhwolf.settings.set
 import io.ktor.client.HttpClient
@@ -20,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.skiko.SystemTheme
 import org.jetbrains.skiko.currentSystemTheme
 import org.publicvalue.multiplatform.oidc.ExperimentalOpenIdConnect
@@ -37,10 +42,14 @@ import java.net.URI
 import java.util.prefs.Preferences
 import javax.swing.SwingUtilities
 
-/** the window's title, which the pages set as the web build sets the tab's */
+/** the window's title, which the pages set as the web build sets the tab's, and its icon */
 object DesktopWindow {
     var title by mutableStateOf("Mogul Studio")
         internal set
+
+    /** the logo, the same one the studio draws its wordmark with */
+    val icon: Painter
+        @Composable get() = painterResource(Res.drawable.mogul_logo)
 }
 
 @OptIn(ExperimentalOpenIdConnect::class)

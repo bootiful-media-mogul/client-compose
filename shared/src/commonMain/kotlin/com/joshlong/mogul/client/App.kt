@@ -94,12 +94,14 @@ import com.joshlong.mogul.client.theme.ThemeController
 import com.joshlong.mogul.client.theme.fonts
 import com.joshlong.mogul.client.theme.palette
 import com.joshlong.mogul.client.transcripts.TranscriptsPanel
+import com.joshlong.mogul.client.ui.BrandMark
 import com.joshlong.mogul.client.ui.ConfirmationDialog
 import com.joshlong.mogul.client.ui.Icon
 import com.joshlong.mogul.client.ui.IconButton
 import com.joshlong.mogul.client.ui.LayoutWidth
 import com.joshlong.mogul.client.ui.LocalLayoutWidth
 import com.joshlong.mogul.client.ui.LocalWindowWidth
+import com.joshlong.mogul.client.ui.PageLayout
 import com.joshlong.mogul.client.ui.MogulIcon
 import kotlinx.coroutines.launch
 
@@ -127,14 +129,6 @@ private fun mainSectionFor(route: Route): Section? = when (route) {
     Route.Blogs, is Route.BlogPosts, is Route.BlogPost -> Section.Blogs
     else -> null
 }
-
-/** below this the layout is mobile's: one column of tabs and a floating toolbar */
-private val desktopBreak = 900.dp
-
-/** from this the page stops stretching and is centered, [pageWidth] wide */
-private val wideBreak = 1700.dp
-
-private val pageWidth = 1600.dp
 
 // the apps draw to the edges of the screen, so whatever the device keeps for itself (a
 // phone's status bar and notch, its home indicator, a tablet's camera) comes out of the
@@ -211,12 +205,7 @@ fun App() {
                 SignInScreen(onSignedIn = { scope.launch { loadSession() } })
             } else if (user != null) {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
-                    // base.css's container queries: mobile below 900, a centered page from 1700
-                    val width = when {
-                        maxWidth < desktopBreak -> LayoutWidth.Mobile
-                        maxWidth < wideBreak -> LayoutWidth.Desktop
-                        else -> LayoutWidth.Wide
-                    }
+                    val width = PageLayout.widthFor(maxWidth, maxHeight)
                     CompositionLocalProvider(LocalLayoutWidth provides width, LocalWindowWidth provides maxWidth) {
                         if (width == LayoutWidth.Mobile) MobileLayout(user, route, onSearch = { paletteOpen = true })
                         else DesktopLayout(user, route, onSearch = { paletteOpen = true })
@@ -262,7 +251,7 @@ private fun DesktopLayout(user: User, route: Route, onSearch: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         // over the page, which the section names' tabs drop onto
         TopBar(user, route, onSearch, Modifier.zIndex(1f))
-        Row(Modifier.fillMaxSize().windowInsetsPadding(underTheBottom).widthIn(max = pageWidth).align(Alignment.CenterHorizontally)) {
+        Row(Modifier.align(Alignment.CenterHorizontally).widthIn(max = PageLayout.maxWidth).fillMaxSize().windowInsetsPadding(underTheBottom)) {
             Column(
                 Modifier.weight(1f).fillMaxSize().verticalScroll(rememberScrollState())
                     .padding(start = Gutter.full, end = Gutter.full, top = 40.dp, bottom = 48.dp),
@@ -270,7 +259,7 @@ private fun DesktopLayout(user: User, route: Route, onSearch: () -> Unit) {
                 RouteContent(route)
             }
             Column(
-                Modifier.width(400.dp + Gutter.full).fillMaxSize().verticalScroll(rememberScrollState())
+                Modifier.width(PageLayout.sidebarWidth + Gutter.full).fillMaxSize().verticalScroll(rememberScrollState())
                     .padding(start = Gutter.full * 2, top = 24.dp, bottom = 48.dp),
                 verticalArrangement = Arrangement.spacedBy(Gutter.full),
             ) {
@@ -423,27 +412,6 @@ private fun MobileLayout(user: User, route: Route, onSearch: () -> Unit) {
     }
 }
 
-/** the wordmark: "mogul" in the display face, "studio" in spaced mono in the brand hue */
-@Composable
-internal fun BrandMark(size: Int) {
-    Row(
-        Modifier.clickable { Router.push(Route.Home) }.pointerHoverIcon(PointerIcon.Hand),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy((size / 4).dp),
-    ) {
-        Text(t("brand.name"), color = palette.chromeInk, fontFamily = fonts.display, fontWeight = FontWeight.Bold, fontSize = size.sp, letterSpacing = (-0.05).sp * size)
-        Text(
-            t("brand.product").uppercase(),
-            modifier = Modifier.padding(bottom = (size / 10).dp),
-            color = palette.brand,
-            fontFamily = fonts.mono,
-            fontWeight = FontWeight.Medium,
-            fontSize = maxOf(10, size * 3 / 8).sp,
-            letterSpacing = 0.24.sp * maxOf(10, size * 3 / 8),
-        )
-    }
-}
-
 /**
  * wordmark, the main sections, then search and the account, on a full-width black band whose
  * contents stay in the page's width; equal sides keep the icons centered on the page
@@ -452,7 +420,7 @@ internal fun BrandMark(size: Int) {
 private fun TopBar(user: User, route: Route, onSearch: () -> Unit, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxWidth().background(palette.topbar).windowInsetsPadding(underTheTop)) {
         Row(
-            Modifier.fillMaxWidth().widthIn(max = pageWidth).align(Alignment.Center).padding(horizontal = 32.dp),
+            Modifier.align(Alignment.Center).widthIn(max = PageLayout.maxWidth).fillMaxWidth().padding(horizontal = 32.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(Modifier.weight(1f)) { BrandMark(32) }

@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.joshlong.mogul.client.i18n.t
@@ -36,6 +35,7 @@ import com.joshlong.mogul.client.theme.ThemeMode
 import com.joshlong.mogul.client.theme.fonts
 import com.joshlong.mogul.client.theme.palette
 import com.joshlong.mogul.client.theme.paletteFor
+import com.joshlong.mogul.client.ui.BrandMark
 import com.joshlong.mogul.client.ui.FieldHint
 import com.joshlong.mogul.client.ui.FieldLabel
 import com.joshlong.mogul.client.ui.FormSection
@@ -123,20 +123,8 @@ private fun PaletteCard(dark: DarkPalette, selected: Boolean, onClick: () -> Uni
                 .background(p.bg)
                 .selectable(selected, role = Role.Button, onClick = onClick),
         ) {
-            Row(
-                Modifier.fillMaxWidth().background(p.topbar).padding(horizontal = 10.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                Text("mogul", color = p.chromeInk, fontFamily = fonts.display, fontWeight = FontWeight.Bold, letterSpacing = (-0.6).sp)
-                Text(
-                    "STUDIO",
-                    Modifier.padding(start = 5.dp, bottom = 3.dp),
-                    color = p.brand,
-                    fontFamily = fonts.mono,
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 10.sp,
-                    letterSpacing = 2.sp,
-                )
+            Row(Modifier.fillMaxWidth().background(p.topbar).padding(horizontal = 10.dp, vertical = 6.dp)) {
+                BrandMark(16, onClick = null)
             }
             Column(Modifier.fillMaxWidth().padding(10.dp)) {
                 Column(

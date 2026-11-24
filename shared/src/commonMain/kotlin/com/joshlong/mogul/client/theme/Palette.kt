@@ -36,7 +36,7 @@ data class Palette(
     val danger: Color,
     /** the band across the top of the page: darker than the chrome, dark in every palette */
     val topbar: Color,
-    /** the wordmark's second word and a top-bar icon's hover: the palette's signature hue */
+    /** a top-bar icon's hover and the rule under the section you're in: the palette's signature hue */
     val brand: Color,
 ) {
     /** a publication panel and its tab: a shade off the panel it sits in */

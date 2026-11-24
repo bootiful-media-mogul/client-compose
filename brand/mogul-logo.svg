@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- the mogul logo, as client-vue/misc/assets/logos/mogul-logo.ai draws it: a teal M on a navy
+       tile, in a faint green ring. bin/brand.sh makes every icon and favicon from this file -->
+  <rect id="tile" width="100" height="100" rx="20" fill="#1e293b"/>
+  <path id="m" d="M20 70V30h15l15 15 15-15h15v40H70V45L50 60 30 45v25z" fill="#609ea0"/>
+  <circle id="ring" cx="50" cy="50" r="35" fill="none" stroke="#22c55e" stroke-width="2" stroke-opacity=".3"/>
+</svg>

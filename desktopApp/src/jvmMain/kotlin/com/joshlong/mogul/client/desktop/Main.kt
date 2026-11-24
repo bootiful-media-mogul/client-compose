@@ -12,6 +12,7 @@ fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
         title = DesktopWindow.title,
+        icon = DesktopWindow.icon,
         state = rememberWindowState(width = 1480.dp, height = 960.dp),
     ) {
         App()
