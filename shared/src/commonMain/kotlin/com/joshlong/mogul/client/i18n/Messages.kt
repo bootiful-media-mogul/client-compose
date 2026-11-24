@@ -22,7 +22,7 @@ internal val englishMessages: Map<String, String> = buildMap {
     put("notes.fields.title", "Title")
     put("notes.fields.url", "URL")
     put("notes.errors.url", "The URL has to start with http:// or https://")
-    put("notes.new.prompt", "{entityName}'s Notes")
+    put("notes.new.description", "Note")
     put("blogs.done", "Done")
     put("blogs.editing", "Editing {title}")
     put("blogs.save", "Save")

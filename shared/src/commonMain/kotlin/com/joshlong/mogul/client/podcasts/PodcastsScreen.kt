@@ -40,7 +40,6 @@ import com.joshlong.mogul.client.ui.MogulTextField
 import com.joshlong.mogul.client.ui.Rule
 import com.joshlong.mogul.client.ui.confirmDeletion
 import com.joshlong.mogul.client.ui.dateTimeToString
-import com.joshlong.mogul.client.writing.writingTools
 
 /** every podcast the mogul has, with links to each one's episodes, its feed, and its editor */
 @Composable
@@ -166,7 +165,6 @@ private fun PodcastEditor(podcast: Podcast, onDone: () -> Unit) {
             label = t("podcasts.new-podcast.title"),
             required = true,
             showCount = true,
-            tools = writingTools(),
         )
         ButtonRow(horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
             MogulButton(t("podcasts.save"), enabled = !updateDisabled, onClick = {

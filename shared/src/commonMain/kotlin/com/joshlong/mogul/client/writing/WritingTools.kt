@@ -168,6 +168,8 @@ private fun WritingAssistant(value: String, onValueChange: (String) -> Unit) {
                     singleLine = false,
                     minLines = 3,
                     enabled = !working,
+                    // a tool's own field doesn't open the tools again
+                    withWritingTools = false,
                 )
                 Row {
                     MogulButton(
@@ -250,6 +252,8 @@ private fun MarkdownTool(value: String, onValueChange: (String) -> Unit) {
                 { answer = it },
                 label = t(if (pending == PendingPrompt.Link) "markdown.add-link-prompt" else "markdown.add-image-prompt"),
                 onSubmit = submit,
+                // a tool's own field doesn't open the tools again
+                withWritingTools = false,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
                 MogulButton(t("buttons.accept"), onClick = submit)

@@ -25,7 +25,7 @@ import com.joshlong.mogul.client.theme.TextSize
 import com.joshlong.mogul.client.theme.fonts
 import com.joshlong.mogul.client.theme.palette
 import com.joshlong.mogul.client.ui.ButtonRow
-import com.joshlong.mogul.client.ui.FieldLabel
+import com.joshlong.mogul.client.ui.FieldRow
 import com.joshlong.mogul.client.ui.FormSection
 import com.joshlong.mogul.client.ui.IconButton
 import com.joshlong.mogul.client.ui.InputTool
@@ -33,7 +33,6 @@ import com.joshlong.mogul.client.ui.MogulButton
 import com.joshlong.mogul.client.ui.MogulIcon
 import com.joshlong.mogul.client.ui.MogulTextField
 import com.joshlong.mogul.client.ui.dateTimeToString
-import com.joshlong.mogul.client.writing.writingTools
 import kotlinx.coroutines.launch
 import kotlin.time.Instant
 
@@ -109,7 +108,7 @@ fun BlogPostEditorScreen(blogId: Long, postId: Long) {
         }
         FormSection(legend) {
             SectionTitle(t("blogs.posts.basics"))
-            MogulTextField(title, { title = it }, label = t("blogs.posts.post.title"), required = true, showCount = true, tools = writingTools())
+            MogulTextField(title, { title = it }, label = t("blogs.posts.post.title"), required = true, showCount = true)
             MogulTextField(
                 description,
                 { description = it },
@@ -118,7 +117,7 @@ fun BlogPostEditorScreen(blogId: Long, postId: Long) {
                 singleLine = false,
                 minLines = 10,
                 showCount = true,
-                tools = listOfNotNull(current?.descriptionComposition?.let { compositionTool(it.id) }) + writingTools(),
+                tools = listOfNotNull(current?.descriptionComposition?.let { compositionTool(it.id) }),
             )
             MogulTextField(
                 summary,
@@ -128,14 +127,13 @@ fun BlogPostEditorScreen(blogId: Long, postId: Long) {
                 singleLine = false,
                 minLines = 5,
                 showCount = true,
-                tools = writingTools() + summarizeTool,
+                tools = listOf(summarizeTool),
             )
             MogulTextField(rssSlug, { rssSlug = it }, label = t("blogs.posts.post.rss-slug"))
             if (current != null) {
                 DateTimeField(t("blogs.posts.post.created"), created, { created = it })
             }
-            Column(verticalArrangement = Arrangement.spacedBy(Gutter.third)) {
-                FieldLabel(t("blogs.posts.post.visible"))
+            FieldRow(t("blogs.posts.post.visible")) {
                 IconButton(
                     if (visible) MogulIcon.Eye else MogulIcon.EyeOff,
                     t(if (visible) "blogs.posts.post.visible" else "blogs.posts.post.not-visible"),

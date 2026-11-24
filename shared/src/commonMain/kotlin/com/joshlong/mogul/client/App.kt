@@ -294,8 +294,13 @@ private fun SidebarPanelFrame(panel: SidebarPanel, title: String, icon: MogulIco
             .clip(shape)
             .background(palette.panelBg),
     ) {
+        // the whole title bar toggles the panel, not just the button at its end
         Row(
-            Modifier.fillMaxWidth().background(palette.chrome).padding(Gutter.half),
+            Modifier.fillMaxWidth()
+                .pointerHoverIcon(PointerIcon.Hand)
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { visible = !visible }
+                .background(palette.chrome)
+                .padding(Gutter.half),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Gutter.third),
         ) {

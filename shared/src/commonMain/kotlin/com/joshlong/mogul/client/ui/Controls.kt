@@ -10,6 +10,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -54,9 +56,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.joshlong.mogul.client.writing.writingTools
 import com.joshlong.mogul.client.i18n.t
 import com.joshlong.mogul.client.i18n.tc
 import com.joshlong.mogul.client.theme.Gutter
@@ -197,16 +201,22 @@ fun Modifier.bleed(start: Dp, end: Dp = 0.dp): Modifier = this.layout { measurab
 fun FormSectionTitle(text: String, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().padding(vertical = Gutter.full)) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(palette.rule))
-        Text(
-            text,
-            modifier = Modifier.padding(top = 20.dp, bottom = 5.dp),
-            color = palette.ink,
-            fontFamily = fonts.display,
-            fontWeight = FontWeight.Bold,
-            fontSize = TextSize.lg,
-            letterSpacing = (-0.02 * 20).sp,
-        )
+        SectionHeading(text, Modifier.padding(top = 20.dp, bottom = 5.dp))
     }
+}
+
+/** the title over a group of fields or a list, in display type, a step above a field's label */
+@Composable
+fun SectionHeading(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        modifier = modifier,
+        color = palette.ink,
+        fontFamily = fonts.display,
+        fontWeight = FontWeight.Bold,
+        fontSize = TextSize.lg,
+        letterSpacing = (-0.02 * 20).sp,
+    )
 }
 
 /**
@@ -220,13 +230,93 @@ fun FieldLabel(text: String, modifier: Modifier = Modifier, @Suppress("UNUSED_PA
         modifier = modifier.padding(bottom = 4.dp),
         color = palette.ink,
         fontSize = TextSize.base,
+        fontWeight = FontWeight.Bold,
     )
 }
+
+/**
+ * one row of a form: the [label] (with [labelEnd], such as a character count, at its right), then
+ * the [field] under it. editable fields and read-only values both lay out through this, so a
+ * value shown read-only sits exactly where the field it turns into would be.
+ */
+@Composable
+fun FieldRow(
+    label: String?,
+    modifier: Modifier = Modifier,
+    required: Boolean = false,
+    labelEnd: (@Composable () -> Unit)? = null,
+    field: @Composable () -> Unit,
+) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.third)) {
+        if (label != null || labelEnd != null) {
+            Row(verticalAlignment = Alignment.Bottom) {
+                if (label != null) FieldLabel(label, Modifier.weight(1f), required) else Spacer(Modifier.weight(1f))
+                labelEnd?.invoke()
+            }
+        }
+        field()
+    }
+}
+
+/**
+ * the box a field's value sits in: a 1dp rounded border around the value, inset. an editable
+ * field draws it; a read-only value draws it clear, so its text lands where the field's would.
+ */
+@Composable
+fun FieldWell(
+    modifier: Modifier = Modifier,
+    border: Color = Color.Transparent,
+    background: Color = Color.Transparent,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    val shape = RoundedCornerShape(Gutter.radius)
+    Box(
+        modifier.fillMaxWidth().clip(shape).background(background).border(1.dp, border, shape).padding(horizontal = 10.dp, vertical = 8.dp),
+        content = content,
+    )
+}
+
+/** the face a field's text is set in */
+@Composable
+private fun fieldTextStyle(): TextStyle = TextStyle(fontFamily = fonts.body, fontSize = TextSize.control, lineHeight = 24.sp, color = palette.ink)
 
 /** a short, muted explanation under a field, as a .pure-form-message */
 @Composable
 fun FieldHint(text: String, modifier: Modifier = Modifier) {
     Text(text, modifier = modifier, color = palette.muted, fontSize = TextSize.sm)
+}
+
+/**
+ * a value shown where a [MogulTextField] would be, read-only and selectable: the same label, and
+ * the text in the same face and at the same inset as in the field, so it lines up with the
+ * form it turns into. with [onClick], the value is a link.
+ */
+@Composable
+fun MogulReadOnlyField(
+    value: String,
+    modifier: Modifier = Modifier,
+    label: String? = null,
+    onClick: (() -> Unit)? = null,
+    textStyle: TextStyle? = null,
+) {
+    FieldRow(label, modifier) {
+        FieldWell {
+            val style = fieldTextStyle().merge(textStyle)
+            SelectionContainer {
+                if (value.isEmpty()) {
+                    Text(t("components.inputWrapper.empty"), style = style.copy(color = palette.muted))
+                } else if (onClick != null) {
+                    Text(
+                        value,
+                        Modifier.pointerHoverIcon(PointerIcon.Hand).clickable(onClick = onClick),
+                        style = style.copy(textDecoration = TextDecoration.Underline),
+                    )
+                } else {
+                    Text(value, style = style)
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -241,7 +331,9 @@ class InputTool(
 
 /**
  * a text field in the studio's recessed-well style, with an optional label, a character
- * count, and tools (icons at the field's right; each opens a panel under the field).
+ * count, and tools (icons at the field's right; each opens a panel under the field). every field
+ * has the writing tools, after its own [tools], except a password, whose value never goes to the
+ * writing assistant.
  */
 @Composable
 fun MogulTextField(
@@ -258,6 +350,7 @@ fun MogulTextField(
     password: Boolean = false,
     showCount: Boolean = false,
     tools: List<InputTool> = emptyList(),
+    withWritingTools: Boolean = !password,
     keyboardType: KeyboardType = KeyboardType.Text,
     onSubmit: (() -> Unit)? = null,
     textStyle: TextStyle? = null,
@@ -265,23 +358,20 @@ fun MogulTextField(
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val count = if (value.isEmpty()) t("components.inputWrapper.empty") else tc("components.inputWrapper.character-count", value.length)
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.third)) {
-        // with tools, the count sits under the field, above the tool carousel, as in InputWrapper.vue
-        val countAbove = showCount && tools.isEmpty()
-        if (label != null || countAbove) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                if (label != null) FieldLabel(label, Modifier.weight(1f), required) else Spacer(Modifier.weight(1f))
-                if (countAbove) Text(count, color = palette.muted, fontSize = TextSize.xs)
-            }
-        }
+    val tools = if (withWritingTools) tools + writingTools() else tools
+    // with tools, the count sits under the field, above the tool carousel, as in InputWrapper.vue
+    val countAbove = showCount && tools.isEmpty()
+    FieldRow(
+        label,
+        modifier,
+        required,
+        labelEnd = if (countAbove) ({ Text(count, color = palette.muted, fontSize = TextSize.xs) }) else null,
+    ) {
         Row(verticalAlignment = Alignment.Top) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(Gutter.radius))
-                    .background(if (enabled) palette.fieldBg else palette.panelBg)
-                    .border(1.dp, if (focused) palette.accent else palette.fieldBorder, RoundedCornerShape(Gutter.radius))
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
+            FieldWell(
+                Modifier.weight(1f),
+                border = if (focused) palette.accent else palette.fieldBorder,
+                background = if (enabled) palette.fieldBg else palette.panelBg,
             ) {
                 BasicTextField(
                     value = value,
@@ -295,7 +385,7 @@ fun MogulTextField(
                     visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
                     keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
                     keyboardActions = KeyboardActions(onDone = { onSubmit?.invoke() }, onSearch = { onSubmit?.invoke() }, onGo = { onSubmit?.invoke() }),
-                    textStyle = (textStyle ?: TextStyle(fontFamily = fonts.body, fontSize = TextSize.control, lineHeight = 24.sp)).copy(color = palette.ink),
+                    textStyle = (textStyle ?: fieldTextStyle()).copy(color = palette.ink),
                     modifier = Modifier.fillMaxWidth().onEnterSubmit(singleLine, onSubmit),
                     decorationBox = { inner ->
                         if (value.isEmpty() && placeholder != null) {

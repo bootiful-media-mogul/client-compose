@@ -39,7 +39,6 @@ import com.joshlong.mogul.client.ui.MogulTextField
 import com.joshlong.mogul.client.ui.confirmDeletion
 import com.joshlong.mogul.client.ui.dateTimeToString
 import com.joshlong.mogul.client.ui.durationToString
-import com.joshlong.mogul.client.writing.writingTools
 import kotlin.time.Instant
 
 /** an episode: its title and description, its graphic and segments, and its publications */
@@ -164,7 +163,6 @@ fun PodcastEpisodeEditorScreen(podcastId: Long, episodeId: Long) {
                 label = t("podcasts.episodes.episode.title"),
                 required = true,
                 showCount = true,
-                tools = writingTools(),
             )
             MogulTextField(
                 value = description,
@@ -174,7 +172,7 @@ fun PodcastEpisodeEditorScreen(podcastId: Long, episodeId: Long) {
                 singleLine = false,
                 minLines = 10,
                 showCount = true,
-                tools = listOfNotNull(draftEpisode?.descriptionComposition?.let { compositionTool(it.id) }) + writingTools(),
+                tools = listOfNotNull(draftEpisode?.descriptionComposition?.let { compositionTool(it.id) }),
             )
             if (draftId != 0L) {
                 DateTimeField(t("podcasts.episodes.episode.created"), createdDate, onValueChange = { createdDate = it })

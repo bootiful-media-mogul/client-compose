@@ -122,9 +122,9 @@ fun SegmentAudioEditor(label: String, segmentId: Long, onClose: () -> Unit, modi
                 return
             }
             // once it's been cleaned, the cleaned audio is what gets rendered, so it's what plays
-            val audio = segment.audio!!
+            val audio = segment.audio
             val playing = segment.cleanedAudio?.takeIf { segment.cleaned } ?: audio
-            val drawn = loadWaveform(segment.waveform!!.url!!)
+            val drawn = loadWaveform(segment.waveform.url!!)
             opened = Opened(
                 drawn,
                 "/api" + playing.url,

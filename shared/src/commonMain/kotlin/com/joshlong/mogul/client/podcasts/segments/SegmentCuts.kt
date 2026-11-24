@@ -60,7 +60,7 @@ fun removals(detections: Detections?, filters: SegmentFilters?, restored: Set<St
     for (d in detections.cleanvoice) {
         val wanted = (filters.fillers && d.kind == FILLER) || (filters.stutters && d.kind == STUTTER)
         if (!wanted || detectionId(d) in restored) continue
-        out.add(Removal(detectionId(d), d.kind!!, d.start + pauseFor(d.end - d.start), d.end))
+        out.add(Removal(detectionId(d), d.kind, d.start + pauseFor(d.end - d.start), d.end))
     }
     if (filters.silences) {
         for (d in detections.silences) {

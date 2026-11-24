@@ -37,7 +37,7 @@ import com.joshlong.mogul.client.theme.palette
 import com.joshlong.mogul.client.theme.paletteFor
 import com.joshlong.mogul.client.ui.BrandMark
 import com.joshlong.mogul.client.ui.FieldHint
-import com.joshlong.mogul.client.ui.FieldLabel
+import com.joshlong.mogul.client.ui.FieldRow
 import com.joshlong.mogul.client.ui.FormSection
 import com.joshlong.mogul.client.ui.MogulCheckbox
 import com.joshlong.mogul.client.ui.MogulSelect
@@ -54,25 +54,26 @@ internal fun AppearanceSettings() {
     val preferences = ThemeController.preferences
     val showing = t("settings.appearance.palettes.${ThemeController.applied.name.lowercase()}")
     FormSection(t("settings.appearance.title")) {
-        FieldLabel(t("settings.appearance.mode"))
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(Gutter.full)) {
-            ThemeMode.entries.forEach { mode ->
-                Row(
-                    Modifier.selectable(preferences.mode == mode, role = Role.RadioButton) {
-                        ThemeController.update { it.copy(mode = mode) }
-                    },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RadioButton(
-                        selected = preferences.mode == mode,
-                        onClick = null,
-                        colors = RadioButtonDefaults.colors(selectedColor = palette.accent, unselectedColor = palette.fieldBorder),
-                    )
-                    Text(t("settings.appearance.modes.${mode.key}"), color = palette.ink, fontSize = TextSize.sm)
+        FieldRow(t("settings.appearance.mode")) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Gutter.full)) {
+                ThemeMode.entries.forEach { mode ->
+                    Row(
+                        Modifier.selectable(preferences.mode == mode, role = Role.RadioButton) {
+                            ThemeController.update { it.copy(mode = mode) }
+                        },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(
+                            selected = preferences.mode == mode,
+                            onClick = null,
+                            colors = RadioButtonDefaults.colors(selectedColor = palette.accent, unselectedColor = palette.fieldBorder),
+                        )
+                        Text(t("settings.appearance.modes.${mode.key}"), color = palette.ink, fontSize = TextSize.sm)
+                    }
                 }
             }
+            FieldHint(t("settings.appearance.showing", "theme" to showing))
         }
-        FieldHint(t("settings.appearance.showing", "theme" to showing))
 
         if (preferences.mode == ThemeMode.Auto) {
             MogulCheckbox(
@@ -100,10 +101,11 @@ internal fun AppearanceSettings() {
         }
 
         if (preferences.mode != ThemeMode.Light) {
-            FieldLabel(t("settings.appearance.dark-palette"))
-            Column(Modifier.widthIn(max = 448.dp), verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
-                DarkPalette.entries.forEach { dark ->
-                    PaletteCard(dark, preferences.dark == dark) { ThemeController.update { it.copy(dark = dark) } }
+            FieldRow(t("settings.appearance.dark-palette")) {
+                Column(Modifier.widthIn(max = 448.dp), verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
+                    DarkPalette.entries.forEach { dark ->
+                        PaletteCard(dark, preferences.dark == dark) { ThemeController.update { it.copy(dark = dark) } }
+                    }
                 }
             }
         }

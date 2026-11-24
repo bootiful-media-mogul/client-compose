@@ -1,7 +1,6 @@
 package com.joshlong.mogul.client.notes
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,9 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -40,9 +37,10 @@ import com.joshlong.mogul.client.ui.IconButton
 import com.joshlong.mogul.client.ui.MogulButton
 import com.joshlong.mogul.client.ui.MogulCheckbox
 import com.joshlong.mogul.client.ui.MogulIcon
+import com.joshlong.mogul.client.ui.MogulReadOnlyField
 import com.joshlong.mogul.client.ui.MogulTextField
+import com.joshlong.mogul.client.ui.SectionHeading
 import com.joshlong.mogul.client.ui.dateTimeToString
-import com.joshlong.mogul.client.writing.writingTools
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -113,6 +111,7 @@ internal object NotesStore {
                         // keep the mogul's own notes fresh
                         reloadMogulNotes()
                     }
+
                     is AppEvent.NotesForNotable -> {
                         this@NotesStore.notableId = event.notableId
                         this@NotesStore.entityName = event.entityName
@@ -120,6 +119,7 @@ internal object NotesStore {
                         this@NotesStore.entityLoaded = true
                         reload()
                     }
+
                     else -> {}
                 }
             }
@@ -134,18 +134,31 @@ internal object NotesStore {
 
     private suspend fun reloadMogulNotes() {
         if (this.mogulId < 0) return
-        this.mogulNotes = runCatching { Mogul.notes.notesForNotable(this.mogulId, "mogul", this.showDoneNotes) }.getOrElse { emptyList() }
+        this.mogulNotes = runCatching {
+            Mogul.notes.notesForNotable(
+                this.mogulId,
+                "mogul",
+                this.showDoneNotes
+            )
+        }.getOrElse { emptyList() }
     }
 
     suspend fun reload() {
         reloadMogulNotes()
         if (this.notableId > 0 && this.type.isNotBlank()) {
-            this.entityNotes = runCatching { Mogul.notes.notesForNotable(this.notableId, this.type, this.showDoneNotes) }.getOrElse { emptyList() }
+            this.entityNotes = runCatching {
+                Mogul.notes.notesForNotable(
+                    this.notableId,
+                    this.type,
+                    this.showDoneNotes
+                )
+            }.getOrElse { emptyList() }
         }
     }
 
     /** a note can be just a title or just a url, as the clipper makes them */
-    fun hasContent(): Boolean = listOf(this.noteText, this.noteTitle, this.noteUrl).any { it.isNotBlank() }
+    fun hasContent(): Boolean =
+        listOf(this.noteText, this.noteTitle, this.noteUrl).any { it.isNotBlank() }
 
     fun loadIntoEditor(note: Note) {
         this.noteText = note.note
@@ -158,6 +171,8 @@ internal object NotesStore {
     }
 
     fun showComposerFor(target: String) {
+        // a new note doesn't start from the one being edited
+        if (this.noteId > 0) clear()
         this.noteTarget = target
         this.showComposer = true
     }
@@ -191,26 +206,13 @@ fun NotesPanel(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) { store.start() }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.half)) {
-        if (store.showComposer) {
-            Column(verticalArrangement = Arrangement.spacedBy(Gutter.half)) {
-                MogulTextField(store.noteTitle, { store.noteTitle = it }, label = t("notes.fields.title"))
-                MogulTextField(store.noteUrl, { store.noteUrl = it }, label = t("notes.fields.url"))
-                if (store.urlError) Text(t("notes.errors.url"), color = palette.danger, fontSize = TextSize.sm)
-                MogulTextField(
-                    store.noteText,
-                    { store.noteText = it },
-                    label = t("notes.new.prompt", "entityName" to if (store.noteTarget == "entity") store.entityName else store.mogulName),
-                    singleLine = false,
-                    minLines = 10,
-                    showCount = true,
-                    tools = writingTools(),
-                )
-                ButtonRow(horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
-                    MogulButton(t("notes.buttons.save"), onClick = { scope.launch { store.save() } }, enabled = store.hasContent())
-                    MogulButton(t("transcripts.buttons.cancel"), onClick = { store.clear() }, enabled = store.hasContent())
-                }
-                Box(Modifier.fillMaxWidth().padding(vertical = Gutter.half).height(2.dp).background(palette.rule))
-            }
+        // a new note is written up here; an existing one is edited where it's shown
+        if (store.showComposer && store.noteId < 0) {
+            NoteComposer()
+            Box(
+                Modifier.fillMaxWidth().padding(vertical = Gutter.half).height(2.dp)
+                    .background(palette.rule)
+            )
         }
         MogulCheckbox(
             store.showDoneNotes,
@@ -221,9 +223,55 @@ fun NotesPanel(modifier: Modifier = Modifier) {
             t("notes.filters.show-done"),
         )
         if (store.entityLoaded) {
-            NotesSection(t("notes.entity.title", "entityName" to store.entityName), store.entityNotes, onNew = { store.showComposerFor("entity") })
+            NotesSection(
+                t("notes.entity.title", "entityName" to store.entityName),
+                store.entityNotes,
+                onNew = { store.showComposerFor("entity") })
         }
-        NotesSection(t("notes.system-wide.title"), store.mogulNotes, onNew = { store.showComposerFor("mogul") })
+        NotesSection(
+            t("notes.system-wide.title"),
+            store.mogulNotes,
+            onNew = { store.showComposerFor("mogul") })
+    }
+}
+
+/** the label over a note's text, the same in the composer as in the note it edits */
+@Composable
+private fun noteLabel(): String = t("notes.new.description")
+
+/** the note being written or edited: its title, url and text, then save and cancel */
+@Composable
+private fun NoteComposer() {
+    val store = NotesStore
+    val scope = rememberCoroutineScope()
+    Column(verticalArrangement = Arrangement.spacedBy(Gutter.half)) {
+        MogulTextField(store.noteTitle, { store.noteTitle = it }, label = t("notes.fields.title"))
+        MogulTextField(store.noteUrl, { store.noteUrl = it }, label = t("notes.fields.url"))
+        if (store.urlError) Text(
+            t("notes.errors.url"),
+            color = palette.danger,
+            fontSize = TextSize.sm
+        )
+        MogulTextField(
+            store.noteText,
+            { store.noteText = it },
+            label = noteLabel(),
+            singleLine = false,
+            minLines = 10,
+            showCount = true,
+        )
+        ButtonRow(horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
+            MogulButton(
+                t("notes.buttons.save"),
+                onClick = { scope.launch { store.save() } },
+                enabled = store.hasContent()
+            )
+            MogulButton(
+                t("transcripts.buttons.cancel"),
+                onClick = { store.clear() },
+                enabled = store.hasContent() || store.noteId > 0
+            )
+        }
     }
 }
 
@@ -231,62 +279,103 @@ fun NotesPanel(modifier: Modifier = Modifier) {
 private fun NotesSection(title: String, notes: List<Note>, onNew: () -> Unit) {
     val scope = rememberCoroutineScope()
     Column {
-        Row(Modifier.fillMaxWidth().padding(vertical = Gutter.half), verticalAlignment = Alignment.CenterVertically) {
-            Text(title, Modifier.weight(1f), color = palette.ink, fontWeight = FontWeight.SemiBold)
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = Gutter.half),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SectionHeading(title, Modifier.weight(1f))
             IconButton(MogulIcon.Plus, t("icons.new-note"), onClick = onNew)
         }
-        notes.forEachIndexed { index, note ->
-            if (index > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(palette.rule))
+        notes.forEach { note ->
+            Box(Modifier.fillMaxWidth().height(1.dp).background(palette.rule))
             NoteItem(
                 note,
                 onDelete = { scope.launch { Mogul.notes.deleteNote(note.id); NotesStore.reload() } },
-                onDone = { done -> scope.launch { Mogul.notes.setNoteDone(note.id, done); NotesStore.reload() } },
+                onDone = { done ->
+                    scope.launch {
+                        Mogul.notes.setNoteDone(
+                            note.id,
+                            done
+                        ); NotesStore.reload()
+                    }
+                },
                 onEdit = { NotesStore.loadIntoEditor(note) },
             )
         }
     }
 }
 
-/** one note (NoteEditor.vue): when, what, and the done, edit and delete controls */
+/**
+ * one note (NoteEditor.vue), laid out as the composer lays it out but read-only: its title, url
+ * and text, then when it was written and the done, edit and delete controls. editing it swaps
+ * the read-only fields for the composer, in place.
+ */
 @Composable
-private fun NoteItem(note: Note, onDelete: () -> Unit, onDone: (Boolean) -> Unit, onEdit: () -> Unit) {
+private fun NoteItem(
+    note: Note,
+    onDelete: () -> Unit,
+    onDone: (Boolean) -> Unit,
+    onEdit: () -> Unit
+) {
+    val editing = NotesStore.showComposer && NotesStore.noteId == note.id
+    Column(
+        Modifier.fillMaxWidth().padding(vertical = Gutter.half),
+        verticalArrangement = Arrangement.spacedBy(Gutter.half)
+    ) {
+        if (editing) NoteComposer() else NoteFields(note, onDelete, onDone, onEdit)
+    }
+}
+
+/** a note's fields, read-only, where the composer would put them */
+@Composable
+private fun NoteFields(
+    note: Note,
+    onDelete: () -> Unit,
+    onDone: (Boolean) -> Unit,
+    onEdit: () -> Unit
+) {
     val done = note.done != null
-    Column(Modifier.fillMaxWidth().padding(bottom = Gutter.half)) {
+    note.title?.takeIf { it.isNotEmpty() }?.let {
+        MogulReadOnlyField(it, label = t("notes.fields.title"))
+    }
+    note.url?.takeIf { it.isNotEmpty() }?.let { url ->
+        MogulReadOnlyField(url, label = t("notes.fields.url"), onClick = { browser.open(url) })
+    }
+    if (note.note.isNotEmpty()) {
+        MogulReadOnlyField(
+            note.note,
+            label = noteLabel(),
+            textStyle =
+                if (done)
+                    TextStyle(
+                        color = palette.ink.copy(alpha = 0.65f),
+                        textDecoration = TextDecoration.LineThrough
+                    )
+                else
+                    null,
+        )
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Gutter.half),
+    ) {
+        Checkbox(
+            checked = done,
+            onCheckedChange = onDone,
+            colors = CheckboxDefaults.colors(
+                checkedColor = palette.accent,
+                uncheckedColor = palette.fieldBorder,
+                checkmarkColor = palette.accentInk
+            ),
+        )
+        IconButton(MogulIcon.Edit, t("icons.edit-note"), onClick = onEdit)
+        IconButton(MogulIcon.Delete, t("icons.delete-note"), onClick = onDelete)
         Text(
             dateTimeToString(note.created) ?: "",
-            Modifier.fillMaxWidth().padding(top = Gutter.half, bottom = Gutter.half),
-            color = palette.ink,
+            Modifier.weight(1f),
+            color = palette.muted,
             fontSize = TextSize.sm,
             textAlign = TextAlign.End,
         )
-        note.title?.takeIf { it.isNotEmpty() }?.let {
-            Text(it, Modifier.padding(bottom = Gutter.half), color = palette.ink, fontWeight = FontWeight.Bold)
-        }
-        note.url?.takeIf { it.isNotEmpty() }?.let { url ->
-            Text(
-                url,
-                Modifier.padding(bottom = Gutter.half).pointerHoverIcon(PointerIcon.Hand).clickable { browser.open(url) },
-                color = palette.ink,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-        Text(
-            note.note,
-            color = if (done) palette.ink.copy(alpha = 0.65f) else palette.ink,
-            textDecoration = if (done) TextDecoration.LineThrough else null,
-        )
-        Row(
-            Modifier.padding(vertical = Gutter.half),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Gutter.half),
-        ) {
-            Checkbox(
-                checked = done,
-                onCheckedChange = onDone,
-                colors = CheckboxDefaults.colors(checkedColor = palette.accent, uncheckedColor = palette.fieldBorder, checkmarkColor = palette.accentInk),
-            )
-            IconButton(MogulIcon.Edit, t("icons.edit-note"), onClick = onEdit)
-            IconButton(MogulIcon.Delete, t("icons.delete-note"), onClick = onDelete)
-        }
     }
 }

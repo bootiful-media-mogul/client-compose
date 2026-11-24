@@ -52,7 +52,6 @@ import com.joshlong.mogul.client.ui.ListenForNotification
 import com.joshlong.mogul.client.ui.MogulButton
 import com.joshlong.mogul.client.ui.MogulIcon
 import com.joshlong.mogul.client.ui.MogulTextField
-import com.joshlong.mogul.client.writing.writingTools
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonArray
@@ -389,7 +388,6 @@ internal class AyrsharePlugin(scope: PublicationScope, name: String, private val
                     minLines = 8,
                     enabled = !this@AyrsharePlugin.publishing,
                     showCount = true,
-                    tools = writingTools(),
                 )
                 Column(Modifier.padding(bottom = Gutter.full), verticalArrangement = Arrangement.spacedBy(Gutter.third)) {
                     val sharedPlatforms = draft.selected.filter { !isCustomized(draft, it) }
@@ -426,7 +424,6 @@ internal class AyrsharePlugin(scope: PublicationScope, name: String, private val
                     minLines = 8,
                     enabled = !this@AyrsharePlugin.publishing,
                     showCount = true,
-                    tools = writingTools(),
                 )
                 this@AyrsharePlugin.compositions.firstOrNull { it.platform == open }?.let { c ->
                     CompositionPanel(c.composition.id)

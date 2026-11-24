@@ -26,7 +26,7 @@ import com.joshlong.mogul.client.i18n.te
 import com.joshlong.mogul.client.theme.Gutter
 import com.joshlong.mogul.client.theme.palette
 import com.joshlong.mogul.client.ui.FieldHint
-import com.joshlong.mogul.client.ui.FieldLabel
+import com.joshlong.mogul.client.ui.FieldRow
 import com.joshlong.mogul.client.ui.FormSection
 import com.joshlong.mogul.client.ui.MogulButton
 import com.joshlong.mogul.client.ui.MogulCheckbox
@@ -110,12 +110,11 @@ private fun SettingField(category: String, setting: Setting, value: String, onVa
         MogulCheckbox(value == "true", { onValueChange(if (it) "true" else "false") }, name)
         return
     }
-    Column(verticalArrangement = Arrangement.spacedBy(Gutter.third)) {
-        FieldLabel(name)
+    FieldRow(name) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
             val secret = setting.type != "TEXT"
             var revealed by remember { mutableStateOf(false) }
-            MogulTextField(value, onValueChange, Modifier.weight(1f), password = secret && !revealed)
+            MogulTextField(value, onValueChange, Modifier.weight(1f), password = secret && !revealed, withWritingTools = !secret)
             if (secret) PasswordReveal(revealed) { revealed = it }
         }
         if (setting.required && !setting.valid) FieldHint(t("labels.required-value"))

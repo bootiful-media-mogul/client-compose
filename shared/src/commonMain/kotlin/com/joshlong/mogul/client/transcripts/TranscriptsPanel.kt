@@ -20,7 +20,6 @@ import com.joshlong.mogul.client.theme.Gutter
 import com.joshlong.mogul.client.ui.ButtonRow
 import com.joshlong.mogul.client.ui.MogulButton
 import com.joshlong.mogul.client.ui.MogulTextField
-import com.joshlong.mogul.client.writing.writingTools
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -113,7 +112,6 @@ fun TranscriptsPanel(modifier: Modifier = Modifier) {
             minLines = 10,
             enabled = !store.busy,
             showCount = true,
-            tools = writingTools(),
         )
         ButtonRow(horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
             MogulButton(t("transcripts.buttons.refresh"), onClick = { scope.launch { store.refresh() } }, enabled = store.transcriptId > 0)

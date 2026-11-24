@@ -27,7 +27,7 @@ import com.joshlong.mogul.client.i18n.t
 import com.joshlong.mogul.client.managedfiles.ManagedFileField
 import com.joshlong.mogul.client.theme.Gutter
 import com.joshlong.mogul.client.theme.palette
-import com.joshlong.mogul.client.ui.FieldLabel
+import com.joshlong.mogul.client.ui.FieldRow
 import com.joshlong.mogul.client.ui.FormSection
 import com.joshlong.mogul.client.ui.ListenForNotification
 import com.joshlong.mogul.client.ui.MogulButton
@@ -88,11 +88,9 @@ fun JobsScreen() {
             val name = t("jobs.name.${request.job.name}")
             FormSection(name) {
                 request.job.requiredContextAttributes.forEach { attribute ->
-                    FieldLabel(
-                        t("selections.params.${request.job.name}.$attribute"),
-                        required = request.values[attribute] == null,
-                    )
-                    JobParameter(request, attribute)
+                    FieldRow(t("selections.params.${request.job.name}.$attribute"), required = request.values[attribute] == null) {
+                        JobParameter(request, attribute)
+                    }
                 }
                 Row(
                     Modifier.fillMaxWidth(),

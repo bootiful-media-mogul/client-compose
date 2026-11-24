@@ -1,13 +1,9 @@
 package com.joshlong.mogul.client.blogs
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -23,14 +19,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
 import com.joshlong.mogul.client.i18n.t
-import com.joshlong.mogul.client.theme.Gutter
 import com.joshlong.mogul.client.theme.TextSize
 import com.joshlong.mogul.client.theme.palette
-import com.joshlong.mogul.client.ui.FieldLabel
+import com.joshlong.mogul.client.ui.FieldRow
+import com.joshlong.mogul.client.ui.FieldWell
 import com.joshlong.mogul.client.ui.dateTimeToString
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -52,20 +46,10 @@ internal fun DateTimeField(label: String, value: Instant?, onValueChange: (Insta
     var pickedDate by remember { mutableStateOf<kotlinx.datetime.LocalDate?>(null) }
     val local = value?.toLocalDateTime(zone)
 
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.third)) {
-        FieldLabel(label)
-        Text(
-            dateTimeToString(value) ?: "",
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(Gutter.radius))
-                .background(palette.fieldBg)
-                .border(1.dp, palette.fieldBorder, RoundedCornerShape(Gutter.radius))
-                .clickable(role = Role.Button) { pickingDate = true }
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            color = palette.ink,
-            fontSize = TextSize.control,
-        )
+    FieldRow(label, modifier) {
+        FieldWell(Modifier.clickable(role = Role.Button) { pickingDate = true }, border = palette.fieldBorder, background = palette.fieldBg) {
+            Text(dateTimeToString(value) ?: "", color = palette.ink, fontSize = TextSize.control)
+        }
     }
 
     if (pickingDate) {

@@ -45,7 +45,6 @@ import com.joshlong.mogul.client.ui.MogulSelect
 import com.joshlong.mogul.client.ui.MogulTextField
 import com.joshlong.mogul.client.ui.confirmDeletion
 import com.joshlong.mogul.client.ui.dateTimeToString
-import com.joshlong.mogul.client.writing.writingTools
 import kotlinx.coroutines.launch
 
 /** the mogul's blogs (BlogsSearchView.vue), or the editor for one of them */
@@ -145,7 +144,7 @@ private fun BlogEditor(blog: Blog, onDone: () -> Unit) {
 
     val saveDisabled = key() == savedKey || "$description:$title".trim() == ":"
     FormSection(t("blogs.editing", "title" to title, "blog" to title)) {
-        MogulTextField(title, { title = it }, label = t("blogs.new-blog.title"), required = true, showCount = true, tools = writingTools())
+        MogulTextField(title, { title = it }, label = t("blogs.new-blog.title"), required = true, showCount = true)
         MogulTextField(
             description,
             { description = it },
@@ -153,7 +152,6 @@ private fun BlogEditor(blog: Blog, onDone: () -> Unit) {
             singleLine = false,
             minLines = 4,
             showCount = true,
-            tools = writingTools(),
         )
         MogulTextField(rssUrl, { rssUrl = it }, label = t("blogs.new-blog.rss-url"))
         ButtonRow(horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
