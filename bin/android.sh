@@ -9,7 +9,7 @@
 #   ANDROID_KEY_PASSWORD
 # without them, both come out unsigned. they reach the android gradle plugin as its injected
 # signing properties, so the build needs no signing configuration of its own
-# shellcheck source=common.sh
+# shellcheck source-path=SCRIPTDIR source=common.sh
 source "$(dirname "$0")/common.sh"
 
 module="$(prop android.module)"

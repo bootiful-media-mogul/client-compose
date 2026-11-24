@@ -9,7 +9,7 @@
 # it reads the same on the day theme's sky blue as on the darkest night one. the variants below
 # only drop the tile (where the system draws one: android's adaptive icons, ios's dark icon) or
 # its color (android's themed icon, ios's tinted icon), and keep the mark itself unchanged
-# shellcheck source=common.sh
+# shellcheck source-path=SCRIPTDIR source=common.sh
 source "$(dirname "$0")/common.sh"
 
 for tool in rsvg-convert magick uv iconutil; do

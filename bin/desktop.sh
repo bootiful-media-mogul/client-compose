@@ -18,7 +18,7 @@
 #
 # secrets.hint in app.properties says how to set these on a laptop. in ci, they'd come from
 # secrets.
-# shellcheck source=common.sh
+# shellcheck source-path=SCRIPTDIR source=common.sh
 source "$(dirname "$0")/common.sh"
 
 module="$(prop desktop.module)"
