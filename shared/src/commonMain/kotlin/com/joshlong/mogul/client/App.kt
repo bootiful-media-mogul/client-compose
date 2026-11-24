@@ -261,7 +261,7 @@ private fun DesktopLayout(user: User, route: Route, onSearch: () -> Unit) {
             }
             Column(
                 Modifier.width(PageLayout.sidebarWidth + Gutter.full).fillMaxSize().verticalScroll(rememberScrollState())
-                    .padding(start = Gutter.full * 2, top = 24.dp, bottom = 48.dp),
+                    .padding( top = 24.dp, bottom = 48.dp),
                 verticalArrangement = Arrangement.spacedBy(Gutter.full),
             ) {
                 SidebarPanelFrame(SidebarPanel.Notes, t("app.panels.notes"), MogulIcon.Notes) { NotesPanel() }
@@ -301,13 +301,12 @@ private fun SidebarPanelFrame(panel: SidebarPanel, title: String, icon: MogulIco
         ) {
             Icon(icon, null, size = 21.dp, tint = palette.chromeInk)
             Text(
-                title.uppercase(),
+                title,
                 Modifier.weight(1f),
                 color = palette.chromeInk,
                 fontFamily = fonts.mono,
                 fontWeight = FontWeight.Medium,
                 fontSize = TextSize.sm,
-                letterSpacing = (0.12 * 15).sp,
             )
             IconButton(
                 if (visible) MogulIcon.Collapse else MogulIcon.Maximize,

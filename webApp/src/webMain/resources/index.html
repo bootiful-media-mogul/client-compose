@@ -54,6 +54,17 @@
         }
       })()
     </script>
+    <!-- Safari 27 never shows the frames Compose draws when it hands the Kotlin/Wasm callback
+         straight to requestAnimationFrame: the WebGL buffer holds the right pixels, the page
+         stays white. calling the same callback from a plain JS function gets them on screen -->
+    <script>
+      (function () {
+        var requestAnimationFrame = window.requestAnimationFrame.bind(window)
+        window.requestAnimationFrame = function (callback) {
+          return requestAnimationFrame(function (timestamp) { return callback(timestamp) })
+        }
+      })()
+    </script>
 </head>
 <body>
     <script type="application/javascript" src="/webApp.js"></script>

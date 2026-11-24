@@ -54,7 +54,7 @@ fun FloatingMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
         shape = MenuDefaults.shape,
-        containerColor = palette.raised,
+        containerColor =  palette.raised,
         // no tint toward the color scheme's primary: the fill is the palette's raised, exactly
         tonalElevation = 0.dp,
         shadowElevation = Floating.elevation,
