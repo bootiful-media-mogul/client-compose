@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +47,7 @@ import com.joshlong.mogul.client.theme.Gutter
 import com.joshlong.mogul.client.theme.TextSize
 import com.joshlong.mogul.client.theme.fonts
 import com.joshlong.mogul.client.theme.palette
+import com.joshlong.mogul.client.ui.FloatingMenu
 import com.joshlong.mogul.client.ui.ListenForNotification
 import com.joshlong.mogul.client.ui.MogulButton
 import com.joshlong.mogul.client.ui.MogulIcon
@@ -261,7 +261,7 @@ internal class AyrsharePlugin(scope: PublicationScope, name: String, private val
                     onClick = { menuOpen = true },
                     enabled = !this@AyrsharePlugin.publishing,
                 )
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }, containerColor = palette.raised) {
+                FloatingMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     Column(Modifier.widthIn(min = 288.dp).padding(horizontal = Gutter.half)) {
                         this@AyrsharePlugin.compositions.forEach { c ->
                             val checked = c.platform in this@AyrsharePlugin.selected

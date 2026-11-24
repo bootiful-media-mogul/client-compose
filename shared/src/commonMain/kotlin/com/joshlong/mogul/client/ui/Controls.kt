@@ -28,7 +28,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -425,7 +424,7 @@ fun <T> MogulSelect(
                 )
                 Icon(MogulIcon.Down, null, size = 16.dp, tint = palette.muted)
             }
-            DropdownMenu(expanded = open, onDismissRequest = { open = false }, containerColor = palette.raised) {
+            FloatingMenu(expanded = open, onDismissRequest = { open = false }) {
                 options.forEach { option ->
                     DropdownMenuItem(
                         text = { Text(optionLabel(option), color = palette.ink) },

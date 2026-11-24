@@ -4,8 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -20,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.joshlong.mogul.client.api.Mogul
 import com.joshlong.mogul.client.i18n.t
@@ -124,10 +128,11 @@ private fun WritingAssistant(value: String, onValueChange: (String) -> Unit) {
         return
     }
 
-    // the tools sit centered in the panel, under the carousel that opened it
+    // the tools span the panel, under the carousel that opened it: each row of three buttons
+    // splits the width evenly, so the rewrite styles line up under the tools that open them
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.third), horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(horizontalArrangement = Arrangement.spacedBy(Gutter.third)) {
-            ToolButton(MogulIcon.Proofread, t("writingassistant.buttons.proofread"), active = false, enabled = !working) {
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(Gutter.third)) {
+            ToolButton(MogulIcon.Proofread, t("writingassistant.buttons.proofread"), active = false, enabled = !working, modifier = Modifier.weight(1f)) {
                 val contents = value.trim()
                 if (contents.isNotEmpty()) {
                     activeTool = ActiveTool.None
@@ -139,18 +144,18 @@ private fun WritingAssistant(value: String, onValueChange: (String) -> Unit) {
                     )
                 }
             }
-            ToolButton(MogulIcon.Rewrite, t("writingassistant.buttons.rewrite"), active = activeTool == ActiveTool.Rewrite, enabled = !working) {
+            ToolButton(MogulIcon.Rewrite, t("writingassistant.buttons.rewrite"), active = activeTool == ActiveTool.Rewrite, enabled = !working, modifier = Modifier.weight(1f)) {
                 activeTool = if (activeTool == ActiveTool.Rewrite) ActiveTool.None else ActiveTool.Rewrite
             }
-            ToolButton(MogulIcon.Ai, t("writingassistant.buttons.generate-with-ai"), active = activeTool == ActiveTool.Ai, enabled = !working) {
+            ToolButton(MogulIcon.Ai, t("writingassistant.buttons.generate-with-ai"), active = activeTool == ActiveTool.Ai, enabled = !working, modifier = Modifier.weight(1f)) {
                 activeTool = if (activeTool == ActiveTool.Ai) ActiveTool.None else ActiveTool.Ai
             }
         }
         when (activeTool) {
-            ActiveTool.Rewrite -> Row(horizontalArrangement = Arrangement.spacedBy(Gutter.third)) {
-                ToolButton(MogulIcon.Friendly, t("writingassistant.buttons.friendly"), active = true, enabled = !working) { rewrite("to be more friendly in tone") }
-                ToolButton(MogulIcon.Concise, t("writingassistant.buttons.concise"), active = true, enabled = !working) { rewrite("to be more concise") }
-                ToolButton(MogulIcon.Professional, t("writingassistant.buttons.professional"), active = true, enabled = !working) { rewrite("to sound more professional") }
+            ActiveTool.Rewrite -> Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(Gutter.third)) {
+                ToolButton(MogulIcon.Friendly, t("writingassistant.buttons.friendly"), active = true, enabled = !working, modifier = Modifier.weight(1f)) { rewrite("to be more friendly in tone") }
+                ToolButton(MogulIcon.Concise, t("writingassistant.buttons.concise"), active = true, enabled = !working, modifier = Modifier.weight(1f)) { rewrite("to be more concise") }
+                ToolButton(MogulIcon.Professional, t("writingassistant.buttons.professional"), active = true, enabled = !working, modifier = Modifier.weight(1f)) { rewrite("to sound more professional") }
             }
             ActiveTool.Ai -> Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(Gutter.radius)).background(palette.panelBg).padding(Gutter.half),
@@ -180,11 +185,15 @@ private fun WritingAssistant(value: String, onValueChange: (String) -> Unit) {
     }
 }
 
-/** a writing-tools button: an icon over its label, on the panel color (raised when active) */
+/**
+ * a writing-tools button: an icon over its label, on the panel color (raised when active). its
+ * row gives it its width and the row's height, so a label that wraps keeps the buttons even
+ */
 @Composable
-private fun ToolButton(icon: MogulIcon, label: String, active: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
+private fun ToolButton(icon: MogulIcon, label: String, active: Boolean, enabled: Boolean = true, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(
-        Modifier
+        modifier
+            .fillMaxHeight()
             .clip(RoundedCornerShape(Gutter.radius))
             .background(if (active) palette.panelBg else palette.raised)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
@@ -192,7 +201,7 @@ private fun ToolButton(icon: MogulIcon, label: String, active: Boolean, enabled:
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(icon, null, size = 20.dp, tint = if (enabled) palette.ink else palette.muted)
-        Text(label, color = if (enabled) palette.ink else palette.muted, fontSize = TextSize.sm)
+        Text(label, color = if (enabled) palette.ink else palette.muted, fontSize = TextSize.sm, textAlign = TextAlign.Center)
     }
 }
 

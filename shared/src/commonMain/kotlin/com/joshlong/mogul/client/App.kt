@@ -28,7 +28,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -96,6 +95,7 @@ import com.joshlong.mogul.client.theme.palette
 import com.joshlong.mogul.client.transcripts.TranscriptsPanel
 import com.joshlong.mogul.client.ui.BrandMark
 import com.joshlong.mogul.client.ui.ConfirmationDialog
+import com.joshlong.mogul.client.ui.FloatingMenu
 import com.joshlong.mogul.client.ui.Icon
 import com.joshlong.mogul.client.ui.IconButton
 import com.joshlong.mogul.client.ui.LayoutWidth
@@ -103,6 +103,7 @@ import com.joshlong.mogul.client.ui.LocalLayoutWidth
 import com.joshlong.mogul.client.ui.LocalWindowWidth
 import com.joshlong.mogul.client.ui.PageLayout
 import com.joshlong.mogul.client.ui.MogulIcon
+import com.joshlong.mogul.client.ui.floating
 import kotlinx.coroutines.launch
 
 /** the places the studio's chrome can take you: the main ones are the big icons in the top bar */
@@ -389,8 +390,7 @@ private fun MobileLayout(user: User, route: Route, onSearch: () -> Unit) {
                 .windowInsetsPadding(underTheBottom)
                 .padding(Gutter.full)
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(Gutter.radius))
-                .background(palette.chrome)
+                .floating(RoundedCornerShape(Gutter.radius), palette.chrome)
                 .padding(horizontal = Gutter.full, vertical = Gutter.half),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -536,7 +536,7 @@ private fun AccountMenu(user: User, up: Boolean) {
             }
             Text(if (up) "▴" else "▾", color = palette.chromeMuted, fontSize = TextSize.xs)
         }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }, containerColor = palette.raised) {
+        FloatingMenu(expanded = open, onDismissRequest = { open = false }) {
             Column(Modifier.widthIn(min = 224.dp).padding(horizontal = Gutter.full, vertical = Gutter.half)) {
                 Text(user.fullName.ifBlank { user.email ?: "" }, color = palette.ink, fontWeight = FontWeight.SemiBold)
                 user.email?.let { Text(it, color = palette.muted, fontSize = TextSize.sm) }
