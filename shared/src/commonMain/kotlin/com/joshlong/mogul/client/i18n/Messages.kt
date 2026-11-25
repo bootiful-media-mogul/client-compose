@@ -486,6 +486,7 @@ internal val englishMessages: Map<String, String> = buildMap {
     put("icons.delete", "Delete {name}")
     put("icons.rss", "RSS feed for {name}")
     put("icons.edit-note", "Edit note")
+    put("icons.drag-note", "Drag into a field")
     put("icons.delete-note", "Delete note")
     put("icons.delete-segment", "Delete segment")
     put("icons.delete-attachment", "Delete attachment")

@@ -103,6 +103,7 @@ import com.joshlong.mogul.client.ui.LocalLayoutWidth
 import com.joshlong.mogul.client.ui.LocalWindowWidth
 import com.joshlong.mogul.client.ui.PageLayout
 import com.joshlong.mogul.client.ui.MogulIcon
+import com.joshlong.mogul.client.ui.TextDragGhost
 import com.joshlong.mogul.client.ui.floating
 import kotlinx.coroutines.launch
 
@@ -215,6 +216,7 @@ fun App() {
                 SearchPalette(open = paletteOpen, onDismiss = { paletteOpen = false })
                 ConfirmationDialog()
                 NotificationBox()
+                TextDragGhost()
             }
         }
     }
@@ -253,19 +255,18 @@ private fun DesktopLayout(user: User, route: Route, onSearch: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         // over the page, which the section names' tabs drop onto
         TopBar(user, route, onSearch, Modifier.zIndex(1f))
-        Row(
-            Modifier.align(Alignment.CenterHorizontally).widthIn(max = PageLayout.maxWidth).fillMaxSize().windowInsetsPadding(underTheBottom)
-                .padding(horizontal = Gutter.full),
-        ) {
+        // the gutters live inside the scrolling columns, not around them: a scroll clips what it
+        // draws to its own bounds (and barely past them), which would square off the panels' shadows
+        Row(Modifier.align(Alignment.CenterHorizontally).widthIn(max = PageLayout.maxWidth).fillMaxSize().windowInsetsPadding(underTheBottom)) {
             Column(
                 Modifier.weight(1f).fillMaxSize().verticalScroll(rememberScrollState())
-                    .padding(start = Gutter.full, end = Gutter.full, top = 40.dp, bottom = 48.dp),
+                    .padding(start = Gutter.full * 2, top = 40.dp, bottom = 48.dp),
             ) {
                 RouteContent(route)
             }
             Column(
-                Modifier.width(PageLayout.sidebarWidth + Gutter.full).fillMaxSize().verticalScroll(rememberScrollState())
-                    .padding( top = 24.dp, bottom = 48.dp),
+                Modifier.width(PageLayout.sidebarWidth + Gutter.full * 3).fillMaxSize().verticalScroll(rememberScrollState())
+                    .padding(horizontal = Gutter.full).padding(top = 24.dp, bottom = 48.dp),
                 verticalArrangement = Arrangement.spacedBy(Gutter.full),
             ) {
                 SidebarPanelFrame(SidebarPanel.Notes, t("app.panels.notes"), MogulIcon.Notes) { NotesPanel() }

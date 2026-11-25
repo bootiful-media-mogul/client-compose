@@ -33,7 +33,10 @@ import com.joshlong.mogul.client.theme.Gutter
 import com.joshlong.mogul.client.theme.TextSize
 import com.joshlong.mogul.client.theme.palette
 import com.joshlong.mogul.client.ui.ButtonRow
+import com.joshlong.mogul.client.ui.DragHandle
 import com.joshlong.mogul.client.ui.IconButton
+import com.joshlong.mogul.client.ui.LayoutWidth
+import com.joshlong.mogul.client.ui.LocalLayoutWidth
 import com.joshlong.mogul.client.ui.MogulButton
 import com.joshlong.mogul.client.ui.MogulCheckbox
 import com.joshlong.mogul.client.ui.MogulIcon
@@ -57,6 +60,20 @@ internal fun isWebUrl(url: String): Boolean {
 }
 
 internal fun blankToNull(value: String): String? = value.trim().ifEmpty { null }
+
+/**
+ * a note as it's dropped into a field: its title as a markdown link to its url, then a dash and
+ * its text. whatever it lacks is left out, and a note with nothing in it is null.
+ */
+internal fun noteAsText(note: Note): String? {
+    val title = note.title?.trim().orEmpty()
+    val url = note.url?.trim().orEmpty()
+    val head = when {
+        title.isNotEmpty() && url.isNotEmpty() -> "[${title.replace("[", "\\[").replace("]", "\\]")}]($url)"
+        else -> title.ifEmpty { url }
+    }
+    return listOf(head, note.note.trim()).filter { it.isNotEmpty() }.joinToString(" - ").ifEmpty { null }
+}
 
 /**
  * what the notes panel shows. it lives outside the panel: the panel's content is only drawn
@@ -335,6 +352,9 @@ private fun NoteFields(
     onEdit: () -> Unit
 ) {
     val done = note.done != null
+    // on a phone, or any window too thin for the panel to sit beside the page, the notes are a
+    // tab of their own with no field beside them to drop into
+    val dragged = noteAsText(note).takeIf { LocalLayoutWidth.current != LayoutWidth.Mobile }
     note.title?.takeIf { it.isNotEmpty() }?.let {
         MogulReadOnlyField(it, label = t("notes.fields.title"))
     }
@@ -359,6 +379,13 @@ private fun NoteFields(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(Gutter.half),
     ) {
+        if (dragged != null) {
+            DragHandle(
+                dragged,
+                label = note.title?.takeIf { it.isNotBlank() } ?: note.url?.takeIf { it.isNotBlank() } ?: note.note,
+                description = t("icons.drag-note"),
+            )
+        }
         Checkbox(
             checked = done,
             onCheckedChange = onDone,

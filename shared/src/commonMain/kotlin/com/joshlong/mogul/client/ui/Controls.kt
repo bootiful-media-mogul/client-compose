@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -329,7 +330,7 @@ class InputTool(
  * a text field in the studio's recessed-well style, with an optional label, a character
  * count, and tools (icons at the field's right; each opens a panel under the field). every field
  * has the writing tools, after its own [tools], except a password, whose value never goes to the
- * writing assistant.
+ * writing assistant. text dragged by a [DragHandle] can be dropped into it.
  */
 @Composable
 fun MogulTextField(
@@ -357,6 +358,7 @@ fun MogulTextField(
     val tools = if (withWritingTools) tools + writingTools() else tools
     // with tools, the count sits under the field, above the tool carousel, as in InputWrapper.vue
     val countAbove = showCount && tools.isEmpty()
+    val drop = rememberTextDropTarget(value, onValueChange, enabled && !password, singleLine)
     FieldRow(
         label,
         modifier,
@@ -365,8 +367,8 @@ fun MogulTextField(
     ) {
         Row(verticalAlignment = Alignment.Top) {
             FieldWell(
-                Modifier.weight(1f),
-                border = if (focused) palette.accent else palette.fieldBorder,
+                Modifier.weight(1f).onGloballyPositioned { drop.well = it },
+                border = if (focused || drop.hovered) palette.accent else palette.fieldBorder,
                 background = if (enabled) palette.fieldBg else palette.panelBg,
             ) {
                 BasicTextField(
@@ -382,7 +384,8 @@ fun MogulTextField(
                     keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
                     keyboardActions = KeyboardActions(onDone = { onSubmit?.invoke() }, onSearch = { onSubmit?.invoke() }, onGo = { onSubmit?.invoke() }),
                     textStyle = (textStyle ?: fieldTextStyle()).copy(color = palette.ink),
-                    modifier = Modifier.fillMaxWidth().onEnterSubmit(singleLine, onSubmit),
+                    onTextLayout = { drop.layout = it },
+                    modifier = Modifier.fillMaxWidth().onGloballyPositioned { drop.field = it }.onEnterSubmit(singleLine, onSubmit),
                     decorationBox = { inner ->
                         if (value.isEmpty() && placeholder != null) {
                             Text(placeholder, color = palette.muted, fontSize = TextSize.control)
