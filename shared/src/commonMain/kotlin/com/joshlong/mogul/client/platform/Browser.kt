@@ -81,9 +81,9 @@ interface Browser {
 
     /**
      * the whole file at url, downloaded, as a URL to give createAudio. an editor seeks
-     * constantly, and a local copy seeks anywhere without the server answering range
-     * requests, which the api's don't: without them Chrome can't seek and Safari won't
-     * play. give it back with releaseAudio when done
+     * every time playback crosses a cut, and a local copy seeks instantly, where a stream
+     * would wait on a range request each time and stutter. give it back with releaseAudio
+     * when done
      */
     suspend fun loadAudio(url: String): String
 
