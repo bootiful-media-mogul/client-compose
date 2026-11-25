@@ -107,10 +107,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # 27 is the java the app ships with (desktopApp's build.gradle.kts finds it through
+      # JAVA_HOME_27_*, in gradle.properties); the last one, 21, runs gradle
       - uses: actions/setup-java@v6
         with:
           distribution: zulu
-          java-version: '21'
+          java-version: |
+            27
+            21
+
+      # the build runs the app once to train its AOT cache, and linux runners have no display
+      - name: Install a virtual display
+        if: ${{ runner.os == 'Linux' }}
+        run: sudo apt-get update && sudo apt-get install -y xvfb
 
       - uses: gradle/actions/setup-gradle@v6
 
@@ -127,7 +136,7 @@ jobs:
           MAC_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && env.HAS_MAC_CERTIFICATE == 'true' && secrets.MAC_SIGNING_IDENTITY || '' }}
         run: |
           [ -z "${KEYCHAIN:-}" ] || export MAC_SIGNING_KEYCHAIN="$KEYCHAIN"
-          bin/desktop.sh
+          if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a bin/desktop.sh; else bin/desktop.sh; fi
 
       - uses: actions/upload-artifact@v7
         with:

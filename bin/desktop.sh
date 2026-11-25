@@ -5,6 +5,10 @@
 # only packages for the system it runs on, which is why ci runs this on each of them. the
 # installer lands in <module>/build/release, named for the version, the system and the cpu.
 #
+# the runtime is java 27, and the build trains an AOT cache of the app inside the .dmg or .deb
+# (not the .msi): it runs the app for a few seconds, so it needs a display (xvfb-run on linux).
+# -Pmogul.aot=false, in GRADLE_ARGS, skips that
+#
 #   DESKTOP_VERSION   the version, like 1.2.3 (desktop.version in app.properties otherwise)
 #
 # on macos, gatekeeper won't open an app that isn't signed with a developer id and notarized by
@@ -64,7 +68,8 @@ if [ "$system" = macos ] && [ -n "${MAC_SIGNING_IDENTITY:-}" ]; then
   [ -f "$ASC_KEY_PATH" ] || { echo "no api key at $ASC_KEY_PATH" >&2; exit 1; }
 fi
 
-./gradlew "${gradle[@]}" clean ":$module:packageDistributionForCurrentOS"
+# shellcheck disable=SC2086
+./gradlew "${gradle[@]}" ${GRADLE_ARGS:-} clean ":$module:packageDistributionForCurrentOS"
 
 built="$(find "$module/build/compose/binaries/main/$format" -name "*.$format" | head -n 1)"
 [ -f "$built" ] || { echo "the build made no .$format in $module/build/compose/binaries/main/$format" >&2; exit 1; }

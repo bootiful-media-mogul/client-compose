@@ -67,7 +67,10 @@ A push that only changes another platform's code doesn't start a run, and every 
   Invite the service account in Play Console with release permissions.
   Play takes an app's first bundle only by hand, and while Play Console has the app as a draft, set the `PLAY_RELEASE_STATUS` variable to `draft`.
   Version codes are the minutes since 1970, so every build is newer than the last.
-* **Desktop.** jlink trims a Java runtime to what the app needs and jpackage puts it inside a `.dmg`, `.msi` or `.deb`, so nobody needs Java installed.
+* **Desktop.** jlink trims a Java runtime (Java 27, which Gradle has to find installed) to what the app needs and jpackage puts it inside a `.dmg`, `.msi` or `.deb`, so nobody needs Java installed.
+  The build then runs the app inside the `.dmg` or `.deb` for 15 seconds to train an AOT cache (Project Leyden) and puts the cache in the app, so it starts with its classes already loaded, linked and profiled: about three times as fast to its first screen.
+  The cache only fits the jars it was trained on, down to their timestamps, so it's trained inside the installer rather than before it; the `.msi` can't be opened up again, so Windows goes without.
+  Training needs a display (the Linux job runs under `xvfb-run`); `-Pmogul.aot=false` skips it, and `-Pmogul.aot.seconds` changes how long it runs.
   jpackage only packages for the system it runs on, so the workflow runs on Apple silicon and Intel Macs, Windows and Linux, then attaches the installers to the release for the tag.
   On macOS, `MAC_CERTIFICATE` (a Developer ID Application certificate and its key, as a base64 `.p12`), `MAC_CERTIFICATE_PASSWORD` and `MAC_SIGNING_IDENTITY` (its name, as Keychain Access shows it) sign the app, and the App Store Connect API key notarizes it; without them, Gatekeeper won't open the `.dmg` on another Mac.
   The Windows installer is unsigned, so SmartScreen warns about it.
