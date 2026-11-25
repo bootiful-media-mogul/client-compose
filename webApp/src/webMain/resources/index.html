@@ -67,6 +67,26 @@
     </script>
 </head>
 <body>
-    <script type="application/javascript" src="/webApp.js"></script>
+    <!-- webApp.js is the loader Compose generates: it runs the Wasm build wherever Wasm GC is
+         supported, and the JS build otherwise. Safari 27 supports it, yet runs the Wasm build
+         wrong: after enough relayouts (a few window resizes do it) every element is drawn at
+         x=0, while the JS build of the same code stays correct. so WebKit, which is Safari and
+         every browser on iOS, gets the JS build. the dev server has no originJsWebApp.js, so
+         there it falls back to webApp.js -->
+    <script>
+      (function () {
+        var agent = navigator.userAgent
+        var webkit = /AppleWebKit/.test(agent) && !/Chrome|Chromium|Edg/.test(agent)
+        function load(src, fallback) {
+          var script = document.createElement('script')
+          script.type = 'application/javascript'
+          script.src = src
+          if (fallback) script.onerror = function () { script.remove(); load(fallback) }
+          document.body.appendChild(script)
+        }
+        if (webkit) load('/originJsWebApp.js', '/webApp.js')
+        else load('/webApp.js')
+      })()
+    </script>
 </body>
 </html>
