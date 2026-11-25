@@ -4,6 +4,9 @@ package com.joshlong.mogul.client.platform
 
 import io.ktor.client.HttpClient
 import kotlin.js.ExperimentalWasmJsInterop
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 import kotlin.js.JsAny
 
 // every js() call is the whole body of a top-level function: that is the only form
@@ -100,6 +103,21 @@ private fun jsUpload(url: String, file: JsAny, onProgress: (Double) -> Unit, onD
     })()""")
 
 private fun jsCreateAudio(url: String): JsAny = js("(function () { var a = new Audio(url); a.preload = 'metadata'; return a })()")
+
+private fun jsLoadObjectUrl(url: String, onDone: (String?, String?) -> Unit): Unit =
+    js("""(function () {
+        fetch(url, { credentials: 'include' })
+          .then(function (response) {
+            if (!response.ok) throw new Error('HTTP ' + response.status)
+            return response.blob()
+          })
+          .then(
+            function (blob) { onDone(URL.createObjectURL(blob), null) },
+            function (e) { onDone(null, String((e && e.message) || e)) }
+          )
+    })()""")
+
+private fun jsRevokeObjectUrl(url: String): Unit = js("URL.revokeObjectURL(url)")
 
 private fun jsAudioCurrentTime(audio: JsAny): Double = js("audio.currentTime")
 
@@ -214,6 +232,15 @@ private object WebBrowser : Browser {
         jsUpload(url, (file as WebPickedFile).handle, onProgress, onDone)
 
     override fun createAudio(url: String): AudioHandle = WebAudio(url)
+
+    override suspend fun loadAudio(url: String): String = suspendCoroutine { continuation ->
+        jsLoadObjectUrl(url) { objectUrl, error ->
+            if (objectUrl != null) continuation.resume(objectUrl)
+            else continuation.resumeWithException(IllegalStateException("couldn't download $url: $error"))
+        }
+    }
+
+    override fun releaseAudio(localUrl: String) = jsRevokeObjectUrl(localUrl)
 
     override fun ablySubscribe(tokenRequestJson: String, channel: String, onMessage: (String) -> Unit) =
         jsAblySubscribe(tokenRequestJson, channel, onMessage)

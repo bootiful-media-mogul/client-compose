@@ -178,6 +178,11 @@ private object AppBrowser : Browser {
         return NativePlatform.createAudio(absolute, headers)
     }
 
+    // the native players stream and seek on their own; there's nothing to download first
+    override suspend fun loadAudio(url: String): String = url
+
+    override fun releaseAudio(localUrl: String) = Unit
+
     override fun ablySubscribe(tokenRequestJson: String, channel: String, onMessage: (String) -> Unit) {
         this.scope.launch { AblySse.subscribe(tokenRequestJson, channel, onMessage) }
     }

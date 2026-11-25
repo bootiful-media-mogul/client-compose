@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,7 @@ import com.joshlong.mogul.client.api.json
 import com.joshlong.mogul.client.api.parseStringContext
 import com.joshlong.mogul.client.events.previewManagedFile
 import com.joshlong.mogul.client.i18n.t
+import com.joshlong.mogul.client.platform.browser
 import com.joshlong.mogul.client.theme.Gutter
 import com.joshlong.mogul.client.theme.TextSize
 import com.joshlong.mogul.client.theme.palette
@@ -45,6 +47,8 @@ import com.joshlong.mogul.client.ui.MogulButton
 import com.joshlong.mogul.client.ui.MogulCheckbox
 import com.joshlong.mogul.client.ui.MogulIcon
 import com.joshlong.mogul.client.ui.MogulTextField
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.roundToLong
@@ -124,10 +128,15 @@ fun SegmentAudioEditor(label: String, segmentId: Long, onClose: () -> Unit, modi
             // once it's been cleaned, the cleaned audio is what gets rendered, so it's what plays
             val audio = segment.audio
             val playing = segment.cleanedAudio?.takeIf { segment.cleaned } ?: audio
-            val drawn = loadWaveform(segment.waveform.url!!)
+            val (drawn, audioUrl) = coroutineScope {
+                val drawn = async { loadWaveform(segment.waveform.url!!) }
+                val audioUrl = async { browser.loadAudio("/api" + playing.url) }
+                drawn.await() to audioUrl.await()
+            }
+            opened?.let { browser.releaseAudio(it.audioUrl) }
             opened = Opened(
                 drawn,
-                "/api" + playing.url,
+                audioUrl,
                 segment.edits?.map { Range(it.start / 1000.0, it.end / 1000.0) },
             )
             cleaned = segment.cleaned
@@ -144,6 +153,9 @@ fun SegmentAudioEditor(label: String, segmentId: Long, onClose: () -> Unit, modi
     }
 
     LaunchedEffect(segmentId) { load() }
+    DisposableEffect(Unit) {
+        onDispose { opened?.let { browser.releaseAudio(it.audioUrl) } }
+    }
 
     fun isThisSegment(notification: Notification) = parseStringContext(notification.context)["segmentId"] == segmentId.toString()
 

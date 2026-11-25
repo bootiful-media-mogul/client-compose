@@ -80,6 +80,16 @@ interface Browser {
     fun createAudio(url: String): AudioHandle
 
     /**
+     * the whole file at url, downloaded, as a URL to give createAudio. an editor seeks
+     * constantly, and a local copy seeks anywhere without the server answering range
+     * requests, which the api's don't: without them Chrome can't seek and Safari won't
+     * play. give it back with releaseAudio when done
+     */
+    suspend fun loadAudio(url: String): String
+
+    fun releaseAudio(localUrl: String)
+
+    /**
      * subscribes to an Ably channel, authenticating with a token request the api made.
      * every message's data (a JSON string) goes to onMessage
      */
