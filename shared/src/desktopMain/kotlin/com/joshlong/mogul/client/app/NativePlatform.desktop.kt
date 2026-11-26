@@ -126,9 +126,10 @@ private class JavaFxAudio(private val url: String, private val headers: Map<Stri
     private var ended: (() -> Unit)? = null
 
     init {
-        startJavaFx()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             runCatching {
+                // here, not on the UI thread the editor makes this on: see startJavaFx
+                startJavaFx()
                 val bytes = http.get(this@JavaFxAudio.url) { headers { this@JavaFxAudio.headers.forEach { (k, v) -> append(k, v) } } }.readRawBytes()
                 val suffix = "." + this@JavaFxAudio.url.substringAfterLast('.', "mp3").take(4).filter { it.isLetterOrDigit() }.ifEmpty { "mp3" }
                 val temp = File.createTempFile("mogul-audio", suffix).apply { deleteOnExit(); writeBytes(bytes) }
@@ -203,8 +204,16 @@ private class JavaFxAudio(private val url: String, private val headers: Map<Stri
         @Volatile
         private var javaFxStarted = false
 
-        /** JavaFX's media player needs its toolkit running, which a Compose app never starts */
-        fun startJavaFx() {
+        /**
+         * JavaFX's media player needs its toolkit running, which a Compose app never starts.
+         * never start it on the UI thread: on a mac, JavaFX starts by handing its run loop to the
+         * main thread and waiting until the main thread has taken it, and AWT's main thread waits
+         * on the UI thread whenever something asks the window about itself (an accessibility
+         * client, the input method). when the two happen at once each waits on the other for
+         * good: the window freezes, and the app has to be force quit
+         */
+        private fun startJavaFx() {
+            check(!SwingUtilities.isEventDispatchThread()) { "JavaFX must be started off the UI thread" }
             if (javaFxStarted) return
             synchronized(this) {
                 if (javaFxStarted) return
