@@ -41,7 +41,8 @@ png() {
 }
 
 # the studio draws the whole logo in its top bar, and the desktop app's window icon is the mark
-uv run -q --with fonttools python brand/wordmark.py # and says if BrandMark.kt's aspect needs changing
+brand/wordmark.java
+#uv run -q --with fonttools python brand/wordmark.py # and says if BrandMark.kt's aspect needs changing
 # as vector drawables: android can't draw an svg resource, and every other platform draws these
 drawable=shared/src/commonMain/composeResources/drawable
 bin/svg2vector.sh brand/mogul-studio-logo.svg "$drawable/mogul_studio_logo.xml"
