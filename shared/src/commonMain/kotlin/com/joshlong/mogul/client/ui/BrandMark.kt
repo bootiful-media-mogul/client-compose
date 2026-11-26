@@ -17,7 +17,7 @@ import com.joshlong.mogul.client.resources.mogul_studio_logo
 import org.jetbrains.compose.resources.painterResource
 
 /**
- * the logo: the mark, "mogul" and "STUDIO", all one svg (brand/mogul-studio-logo.svg) with the
+ * the logo: the mark, "mogul" and "STUDIO", all one picture (brand/mogul-studio-logo.svg, which bin/brand.sh makes the drawable) with the
  * words as outlines, so it's the same picture at every size, in every layout and every palette,
  * with no line heights to shift one word against the other. it's drawn for the dark bars it sits
  * on. size is the "mogul"'s, in dp; the logo is 1.25 times that tall. it goes home when clicked,
@@ -25,7 +25,7 @@ import org.jetbrains.compose.resources.painterResource
  */
 @Composable
 internal fun BrandMark(size: Int, modifier: Modifier = Modifier, onClick: (() -> Unit)? = { Router.push(Route.Home) }) {
-    // the svg loads in the background, with no shape until it's there, so the box is sized from
+    // the drawable loads in the background, with no shape until it's there, so the box is sized from
     // the shape it will have rather than jumping when it arrives
     Image(
         painterResource(Res.drawable.mogul_studio_logo),

@@ -30,8 +30,11 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
 /**
- * the studio's icons, the svgs in the Vue client's assets/images/icons. they're drawn in a
- * single color, the current ink, as Icon.vue drew them with currentColor
+ * the studio's icons, the svgs in the Vue client's assets/images/icons, as vector drawables:
+ * android can't draw an svg resource (painterResource throws, and the app dies), and every
+ * platform draws these. the svgs that knocked a glyph out with a mask have it cut out of the
+ * path itself, as a drawable has no masks. they're drawn in a single color, the current ink, as
+ * Icon.vue drew them with currentColor
  */
 enum class MogulIcon(val resource: DrawableResource) {
     Ai(Res.drawable.ic_ai),

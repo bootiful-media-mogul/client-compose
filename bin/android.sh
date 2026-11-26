@@ -38,9 +38,12 @@ now="$(date -u +%s)"
 version_code="$((now / 60))"
 version_name="$(date -u -r "$now" +%Y%m%d.%H%M 2>/dev/null || date -u -d "@$now" +%Y%m%d.%H%M)"
 
+# only the app's module is cleaned, so no bundle from an earlier build is left for
+# bin/android-play.sh to find. the rest needn't be: gradle rebuilds what the server and the
+# versions feed, and a whole-project clean deletes the build bin/web-dev.sh is writing to
 env ${signing[@]+"${signing[@]}"} ./gradlew "-P$server_property=$server" \
   "-Pmogul.versionCode=$version_code" "-Pmogul.versionName=$version_name" \
-  clean ":$module:bundleRelease" ":$module:assembleRelease"
+  ":$module:clean" ":$module:bundleRelease" ":$module:assembleRelease"
 
 echo
 echo "built version $version_name ($version_code) for $server:"

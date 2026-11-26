@@ -3,7 +3,8 @@
 # the studio draws in its top bar (brand/mogul-studio-logo.svg, by brand/wordmark.py), the
 # favicons, and the android, ios and desktop app icons. run it after changing the svg, and check
 # in what it writes. it needs rsvg-convert and imagemagick (brew install librsvg imagemagick),
-# uv, for wordmark.py's fonttools, and iconutil, which comes with macos, for the .icns.
+# uv, for wordmark.py's fonttools, iconutil, which comes with macos, for the .icns, and java, for
+# the drawables (bin/svg2vector.sh, which says what else it needs).
 #
 # the logo is the same in every palette, so it carries its own colors and its own navy tile:
 # it reads the same on the day theme's sky blue as on the darkest night one. the variants below
@@ -12,7 +13,7 @@
 # shellcheck source-path=SCRIPTDIR source=common.sh
 source "$(dirname "$0")/common.sh"
 
-for tool in rsvg-convert magick uv iconutil; do
+for tool in rsvg-convert magick uv iconutil java; do
   command -v "$tool" >/dev/null || { echo "bin/brand.sh needs $tool" >&2; exit 1; }
 done
 
@@ -41,8 +42,10 @@ png() {
 
 # the studio draws the whole logo in its top bar, and the desktop app's window icon is the mark
 uv run -q --with fonttools python brand/wordmark.py # and says if BrandMark.kt's aspect needs changing
-cp brand/mogul-studio-logo.svg shared/src/commonMain/composeResources/drawable/mogul_studio_logo.svg
-cp "$logo" shared/src/commonMain/composeResources/drawable/mogul_logo.svg
+# as vector drawables: android can't draw an svg resource, and every other platform draws these
+drawable=shared/src/commonMain/composeResources/drawable
+bin/svg2vector.sh brand/mogul-studio-logo.svg "$drawable/mogul_studio_logo.xml"
+bin/svg2vector.sh "$logo" "$drawable/mogul_logo.xml"
 
 # the web build. browsers that take an svg favicon get the logo itself
 web=webApp/src/webMain/resources
