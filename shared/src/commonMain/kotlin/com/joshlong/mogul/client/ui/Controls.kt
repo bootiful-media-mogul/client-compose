@@ -326,11 +326,15 @@ class InputTool(
     val content: @Composable (value: String, onValueChange: (String) -> Unit) -> Unit,
 )
 
+/** whether a field with this keyboard is for words, which the writing tools can help with */
+internal fun takesProse(keyboardType: KeyboardType): Boolean = keyboardType == KeyboardType.Text || keyboardType == KeyboardType.Ascii
+
 /**
  * a text field in the studio's recessed-well style, with an optional label, a character
- * count, and tools (icons at the field's right; each opens a panel under the field). every field
- * has the writing tools, after its own [tools], except a password, whose value never goes to the
- * writing assistant. text dragged by a [DragHandle] can be dropped into it.
+ * count, and tools (icons at the field's right; each opens a panel under the field). a field for
+ * prose has the writing tools, after its own [tools]; a password, whose value never goes to the
+ * writing assistant, and a field for a number, an address, and the like, don't. text dragged by a
+ * [DragHandle] can be dropped into it.
  */
 @Composable
 fun MogulTextField(
@@ -347,8 +351,8 @@ fun MogulTextField(
     password: Boolean = false,
     showCount: Boolean = false,
     tools: List<InputTool> = emptyList(),
-    withWritingTools: Boolean = !password,
     keyboardType: KeyboardType = KeyboardType.Text,
+    withWritingTools: Boolean = !password && takesProse(keyboardType),
     onSubmit: (() -> Unit)? = null,
     textStyle: TextStyle? = null,
 ) {
