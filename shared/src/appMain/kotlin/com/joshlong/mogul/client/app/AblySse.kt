@@ -12,12 +12,14 @@ import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
-import io.ktor.utils.io.readUTF8Line
+import io.ktor.utils.io.LineEnding
+import io.ktor.utils.io.readLine
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * server-to-app notifications, over Ably's server-sent events: the Ably library the web build
@@ -56,7 +58,7 @@ internal object AblySse {
             val outcome = runCatching { this.stream(token, channel, onMessage) }
             if (outcome.getOrNull() == Stop) return
             outcome.exceptionOrNull()?.let { println("notifications dropped: ${it.message}") }
-            delay(backoff)
+            delay(backoff.milliseconds)
             backoff = (backoff * 2).coerceAtMost(60_000L)
         }
     }
@@ -77,7 +79,7 @@ internal object AblySse {
             }
             val body = response.bodyAsChannel()
             while (!body.isClosedForRead) {
-                val line = body.readUTF8Line() ?: break
+                val line = body.readLine(lineEnding = LineEnding.Lenient) ?: break
                 if (!line.startsWith("data:")) continue
                 // each event is a message, enveloped: what the api published is its data
                 val message = runCatching { json.parseToJsonElement(line.removePrefix("data:").trim()) }.getOrNull() as? JsonObject ?: continue

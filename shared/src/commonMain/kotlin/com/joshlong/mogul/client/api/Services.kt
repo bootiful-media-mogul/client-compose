@@ -609,13 +609,31 @@ class NotesService(private val client: GraphQlClient) {
         mapOf("id" to id, "done" to done), "setNoteDone",
     )
 
-    suspend fun createNote(type: String, id: Long, note: String, title: String?, url: String?): Boolean = this.client.field(
+    /**
+     * asks for the page at the url to be read and summarized. the summary comes later, in a
+     * page-summarized-event whose key is what this answers
+     */
+    suspend fun summarizePage(url: String): String? = this.client.field(
+        "mutation SummarizePage(\$url: String) { summarizePage(url: \$url) }", mapOf("url" to url), "summarizePage",
+    )
+
+    /** a title for a note with this text, written by the model */
+    suspend fun noteTitle(description: String): String? = this.client.field(
+        "query NoteTitle(\$description: String) { noteTitle(description: \$description) }",
+        mapOf("description" to description), "noteTitle",
+    )
+
+    /** [summarize]: whether the api should summarize the page into a note with a url and no text */
+    suspend fun createNote(
+        type: String, id: Long, note: String, title: String?, url: String?, summarize: Boolean = true,
+    ): Boolean = this.client.field(
         """
-        mutation CreateNote(${'$'}type: String, ${'$'}id: Int, ${'$'}note: String, ${'$'}title: String, ${'$'}url: String) {
-          createNote(type: ${'$'}type, id: ${'$'}id, note: ${'$'}note, title: ${'$'}title, url: ${'$'}url)
+        mutation CreateNote(${'$'}type: String, ${'$'}id: Int, ${'$'}note: String, ${'$'}title: String, ${'$'}url: String, ${'$'}summarize: Boolean) {
+          createNote(type: ${'$'}type, id: ${'$'}id, note: ${'$'}note, title: ${'$'}title, url: ${'$'}url, summarize: ${'$'}summarize)
         }
         """,
-        mapOf("type" to type, "id" to id, "note" to note, "title" to title, "url" to url), "createNote",
+        mapOf("type" to type, "id" to id, "note" to note, "title" to title, "url" to url, "summarize" to summarize),
+        "createNote",
     )
 
     suspend fun notesForNotable(id: Long, type: String, includeDone: Boolean = true): List<Note> = this.client.field(

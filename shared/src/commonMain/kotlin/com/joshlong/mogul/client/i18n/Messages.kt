@@ -416,7 +416,7 @@ internal val englishMessages: Map<String, String> = buildMap {
     put("app.made-with-love", " Mogul, made with love ❤️ by {josh} (and with Spring 🍃) ")
     put("app.panels.notes", "Notes")
     put("app.panels.transcripts", "Transcripts")
-    put("app.panels.media-preview", "Media Preview")
+    put("app.panels.media-preview", "Preview")
     put("confirm.deletion", "Are you sure you want to delete \"{title}\"? \n    \nThis is NOT reversible! ")
     put("ok", "OK")
     put("transcripts.text", "Transcript for {title}")

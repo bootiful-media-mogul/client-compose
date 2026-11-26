@@ -47,7 +47,7 @@ internal object AppAuth {
 
     init {
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
-            this@AppAuth.tokens.accessTokenFlow.collect { this@AppAuth.accessToken = it }
+            tokens.tokenResponseFlow.collect { accessToken = it?.access_token }
         }
     }
 

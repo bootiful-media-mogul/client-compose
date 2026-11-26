@@ -26,6 +26,23 @@ private val composeMessages: Map<String, String> = mapOf(
     "updates.available" to "Mogul Studio {latest} is out. This is {current}.",
     "updates.download" to "Download",
     "updates.later" to "Later",
+    // a note's url, read and summarized into its text
+    "notes.buttons.summarize" to "Summarize",
+    "notes.buttons.summarizing" to "Summarizing…",
+    "notes.summary.errors.address" to "Mogul only reads pages on the public internet, so it can't summarize this one.",
+    "notes.summary.errors.blocked" to "This site doesn't let automated readers in, so Mogul can't summarize it.",
+    "notes.summary.errors.not-found" to "There's no page at that address.",
+    "notes.summary.errors.server-error" to "The site had an error. Try again later.",
+    "notes.summary.errors.status" to "The site wouldn't send the page, so there's no summary.",
+    "notes.summary.errors.redirects" to "The page redirects too many times to summarize.",
+    "notes.summary.errors.content-type" to "This isn't a web page (it may be a PDF or an image), so there's no summary.",
+    "notes.summary.errors.encoding" to "The site sent the page in a form Mogul doesn't read.",
+    "notes.summary.errors.not-html" to "The site says this is a web page, but it isn't, so there's no summary.",
+    "notes.summary.errors.empty" to "There's no text on the page to summarize.",
+    "notes.summary.errors.unreachable" to "Mogul couldn't reach the page. Try again later.",
+    "notes.summary.errors.model" to "The page was read, but summarizing it didn't work. Try again.",
+    "notes.summary.errors.timeout" to "Summarizing is taking too long. Try again later.",
+    "notes.summary.errors.failed" to "This page couldn't be summarized. Try again.",
 )
 
 private fun message(key: String): String? = englishMessages[key] ?: composeMessages[key]

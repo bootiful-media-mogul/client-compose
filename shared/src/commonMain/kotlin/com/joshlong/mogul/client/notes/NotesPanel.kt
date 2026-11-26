@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.joshlong.mogul.client.api.Mogul
 import com.joshlong.mogul.client.api.Note
+import com.joshlong.mogul.client.api.parseStringContext
 import com.joshlong.mogul.client.events.AppEvent
 import com.joshlong.mogul.client.events.Events
 import com.joshlong.mogul.client.i18n.t
@@ -45,8 +46,10 @@ import com.joshlong.mogul.client.ui.MogulTextField
 import com.joshlong.mogul.client.ui.SectionHeading
 import com.joshlong.mogul.client.ui.dateTimeToString
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.minutes
 
 /** the api only takes absolute http(s) urls, since a note's url is shown as a link */
 internal fun isWebUrl(url: String): Boolean {
@@ -74,6 +77,26 @@ internal fun noteAsText(note: Note): String? {
     }
     return listOf(head, note.note.trim()).filter { it.isNotEmpty() }.joinToString(" - ").ifEmpty { null }
 }
+
+/** a summary goes in as the text of a note with none, and under the text of one that has some */
+internal fun withSummary(text: String, summary: String): String =
+    if (text.isBlank()) summary else text.trimEnd() + "\n\n" + summary
+
+// the reasons the api gives for a page it wouldn't read or summarize, each with a message
+private val summaryReasons = setOf(
+    "address", "blocked", "not-found", "server-error", "status", "redirects", "content-type", "encoding",
+    "not-html", "empty", "unreachable", "model",
+)
+
+/** what the composer says about a summary that didn't come, as a message key, or null if it came */
+internal fun summaryProblemFor(outcome: String?, reason: String?): String? = when {
+    outcome == "summarized" -> null
+    reason != null && reason in summaryReasons -> "notes.summary.errors.$reason"
+    else -> "notes.summary.errors.failed"
+}
+
+// longer than reading a page (30s at most) and the model (seconds) together, with room to spare
+private val SUMMARY_TIMEOUT = 2.minutes
 
 /**
  * what the notes panel shows. it lives outside the panel: the panel's content is only drawn
@@ -112,9 +135,44 @@ internal object NotesStore {
     var noteUrl by mutableStateOf("")
     var urlError by mutableStateOf(false)
 
+    /** the summary the composer is waiting for, if it's waiting for one */
+    private var summaryRequestId by mutableStateOf<String?>(null)
+
+    /** the summary whose title the composer is waiting for, if it's waiting for one */
+    private var titleRequestId by mutableStateOf<String?>(null)
+
+    /** why the composer's last summary didn't come, as a message key */
+    var summaryProblem by mutableStateOf<String?>(null)
+        private set
+
+    /**
+     * the composer's page is being read and summarized, and then titled: its text is the summary's
+     * to fill in
+     */
+    val summarizing: Boolean get() = this.summaryRequestId != null || this.titleRequestId != null
+
     fun start() {
         if (this.started) return
         this.started = true
+        // the store lives as long as the app, so these are never unregistered
+        Mogul.notifications.listenForCategory("page-summarized-event") { notification ->
+            val requestId = notification.key
+            if (requestId != this.summaryRequestId) return@listenForCategory
+            val context = parseStringContext(notification.context)
+            this.summaryRequestId = null
+            val summary = context["summary"]
+            if (context["outcome"] == "summarized" && !summary.isNullOrBlank()) {
+                this.noteText = withSummary(this.noteText, summary)
+                if (this.noteTitle.isBlank()) title(requestId)
+            } else
+                this.summaryProblem = summaryProblemFor(context["outcome"], context["reason"])
+        }
+        // the api writes a summary into a clip as soon as it's saved, and a title, if it had none
+        Mogul.notifications.listenForCategory("note-summarized-event") { notification ->
+            val id = notification.key.toLongOrNull() ?: return@listenForCategory
+            val context = parseStringContext(notification.context)
+            clipSummarized(id, context["summary"], context["title"])
+        }
         // undispatched, so it's listening before anything a page does on load can tell it
         this.scope.launch(start = CoroutineStart.UNDISPATCHED) {
             Events.events.collect { event ->
@@ -201,6 +259,61 @@ internal object NotesStore {
         this.urlError = false
         this.noteId = -1
         this.showComposer = false
+        // a summary or a title that comes after this has nowhere to go
+        this.summaryRequestId = null
+        this.titleRequestId = null
+        this.summaryProblem = null
+    }
+
+    /**
+     * asks for the page at the composer's url, saved or not, to be read and summarized into the
+     * composer's text. the text can't be edited until the summary comes, or doesn't.
+     */
+    suspend fun summarize() {
+        val url = this.noteUrl.trim()
+        this.urlError = !isWebUrl(url)
+        if (this.urlError || this.summarizing) return
+        this.summaryProblem = null
+        val requestId = runCatching { Mogul.notes.summarizePage(url) }.getOrNull()
+        if (requestId == null) {
+            this.summaryProblem = "notes.summary.errors.failed"
+            return
+        }
+        this.summaryRequestId = requestId
+        // if no answer comes -- the processors are down, say -- give the text back
+        this.scope.launch {
+            delay(SUMMARY_TIMEOUT)
+            if (this@NotesStore.summaryRequestId == requestId) {
+                this@NotesStore.summaryRequestId = null
+                this@NotesStore.summaryProblem = "notes.summary.errors.timeout"
+            }
+        }
+    }
+
+    /**
+     * a title for the note, made from its text now the summary is in it, if it has no title yet. a
+     * title that can't be made costs the note nothing but the title.
+     */
+    private fun title(requestId: String) {
+        this.titleRequestId = requestId
+        this.scope.launch {
+            val title = runCatching { Mogul.notes.noteTitle(this@NotesStore.noteText) }.getOrNull()
+            if (this@NotesStore.titleRequestId != requestId) return@launch
+            if (!title.isNullOrBlank() && this@NotesStore.noteTitle.isBlank()) this@NotesStore.noteTitle = title
+            this@NotesStore.titleRequestId = null
+        }
+    }
+
+    /**
+     * the api has written a summary into a clip, and perhaps a title. if the clip is open in the
+     * composer, they go into what's being written too: saving that would otherwise write over them.
+     */
+    private fun clipSummarized(id: Long, summary: String?, title: String?) {
+        if (this.showComposer && this.noteId == id) {
+            if (!summary.isNullOrBlank()) this.noteText = withSummary(this.noteText, summary)
+            if (!title.isNullOrBlank() && this.noteTitle.isBlank()) this.noteTitle = title
+        }
+        this.scope.launch { reload() }
     }
 
     suspend fun save() {
@@ -210,7 +323,8 @@ internal object NotesStore {
         this.urlError = url != null && !isWebUrl(url)
         if (this.urlError) return
         if (this.noteId > 0) Mogul.notes.updateNote(this.noteId, this.noteText, title, url)
-        else Mogul.notes.createNote(type, id, this.noteText, title, url)
+        // a note made here is summarized only when the composer asks
+        else Mogul.notes.createNote(type, id, this.noteText, title, url, summarize = false)
         reload()
         clear()
     }
@@ -256,7 +370,12 @@ fun NotesPanel(modifier: Modifier = Modifier) {
 @Composable
 private fun noteLabel(): String = t("notes.new.description")
 
-/** the note being written or edited: its title, url and text, then save and cancel */
+/**
+ * the note being written or edited: its title, url and text, then summarize, save and cancel.
+ * summarize reads the page at the url, saved or not, and puts a summary of it into the text, and
+ * then, if the note has no title, a title made from the text into the title. the text can't be
+ * edited, or the note saved, until both come.
+ */
 @Composable
 private fun NoteComposer() {
     val store = NotesStore
@@ -276,12 +395,21 @@ private fun NoteComposer() {
             singleLine = false,
             minLines = 10,
             showCount = true,
+            enabled = !store.summarizing,
         )
+        store.summaryProblem?.let { problem ->
+            Text(t(problem), color = palette.danger, fontSize = TextSize.sm)
+        }
         ButtonRow(horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
+            MogulButton(
+                t(if (store.summarizing) "notes.buttons.summarizing" else "notes.buttons.summarize"),
+                onClick = { scope.launch { store.summarize() } },
+                enabled = !store.summarizing && isWebUrl(store.noteUrl),
+            )
             MogulButton(
                 t("notes.buttons.save"),
                 onClick = { scope.launch { store.save() } },
-                enabled = store.hasContent()
+                enabled = store.hasContent() && !store.summarizing
             )
             MogulButton(
                 t("transcripts.buttons.cancel"),
@@ -332,7 +460,7 @@ private fun NoteItem(
     note: Note,
     onDelete: () -> Unit,
     onDone: (Boolean) -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
 ) {
     val editing = NotesStore.showComposer && NotesStore.noteId == note.id
     Column(
@@ -349,7 +477,7 @@ private fun NoteFields(
     note: Note,
     onDelete: () -> Unit,
     onDone: (Boolean) -> Unit,
-    onEdit: () -> Unit
+    onEdit: () -> Unit,
 ) {
     val done = note.done != null
     // on a phone, or any window too thin for the panel to sit beside the page, the notes are a
