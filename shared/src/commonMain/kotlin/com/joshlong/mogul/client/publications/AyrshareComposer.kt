@@ -94,10 +94,6 @@ internal class AyrsharePlugin(scope: PublicationScope, name: String, private val
 
     override val enabled: Boolean get() = !this.publishing && this.pluginReady && isPublishable(this.draft)
 
-    // not schedulable from its own panel for now: scheduling a post is done by picking the
-    // day on the home page's calendar
-    override val schedulable: Boolean get() = false
-
     private fun key(key: String) = "publications.plugins.${this.name}.composer.$key"
 
     private fun ct(key: String, vararg args: Pair<String, Any?>) = t(key(key), *args)

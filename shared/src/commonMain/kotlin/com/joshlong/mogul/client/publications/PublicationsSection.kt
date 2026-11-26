@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.joshlong.mogul.client.api.Mogul
 import com.joshlong.mogul.client.api.Publication
+import com.joshlong.mogul.client.api.PublisherPluginDescriptor
 import com.joshlong.mogul.client.api.toJson
 import com.joshlong.mogul.client.i18n.t
 import com.joshlong.mogul.client.theme.Gutter
@@ -39,6 +41,7 @@ import com.joshlong.mogul.client.theme.palette
 import com.joshlong.mogul.client.ui.ListenForNotification
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
 import kotlin.time.Instant
 
 private val tileSize = 50.dp
@@ -48,7 +51,8 @@ private val tileSize = 50.dp
  * each opening its panel beneath, then the publications so far. which plugins are offered
  * depends on the publishable's type (post, episode, mogulStatus), as the Vue editors chose.
  * showExistingPublications is false where something else on the page already lists them
- * (the home page); scheduled is when the publish buttons send a publication, null for now.
+ * (the home page). scheduleOn is the day the schedule picker starts on (the home page's
+ * calendar passes the day that was picked); null starts it at the next hour.
  */
 @Composable
 fun PublicationsSection(
@@ -57,7 +61,7 @@ fun PublicationsSection(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     showExistingPublications: Boolean = true,
-    scheduled: Instant? = null,
+    scheduleOn: LocalDate? = null,
 ) {
     val coroutines = rememberCoroutineScope()
     var existing by remember(publishableType, publishableId) { mutableStateOf<List<Publication>>(emptyList()) }
@@ -101,7 +105,28 @@ fun PublicationsSection(
             },
         )
     }
-    val plugins = remember(scope) { pluginsFor(scope) }
+    val panels = remember(scope) { pluginsFor(scope) }
+
+    /**
+     * the server's word on which plugins publish this kind of publishable and which of them
+     * can be scheduled, by name. null until it's answered, or if it couldn't: then every panel
+     * the client has is shown, and none of them offers a schedule the server might refuse.
+     */
+    var offered by remember(publishableType) { mutableStateOf<Map<String, PublisherPluginDescriptor>?>(null) }
+    var offeredLoaded by remember(publishableType) { mutableStateOf(false) }
+    LaunchedEffect(publishableType) {
+        offered = runCatching { Mogul.publications.publisherPlugins(publishableType) }
+            .onFailure { println("couldn't load the publisher plugins for $publishableType: ${it.message}") }
+            .getOrNull()
+            ?.associateBy { it.name }
+        offeredLoaded = true
+    }
+    val plugins = when {
+        // no tiles until the server has said, so one it doesn't have can't flash up and vanish
+        !offeredLoaded -> emptyList()
+        offered == null -> panels
+        else -> panels.filter { it.name in offered!! }
+    }
     var selected by remember(scope) { mutableStateOf<String?>(null) }
 
     LaunchedEffect(scope) { refresh() }
@@ -129,7 +154,8 @@ fun PublicationsSection(
         }
     }
 
-    plugins.forEach { it.Effects() }
+    // keyed, so a plugin's effects stay its own as the list settles
+    plugins.forEach { plugin -> key(plugin.name) { plugin.Effects() } }
 
     Column(modifier.fillMaxWidth().padding(top = Gutter.full)) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Gutter.half)) {
@@ -145,7 +171,10 @@ fun PublicationsSection(
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(topStart = if (plugins.first() == plugin) 0.dp else Gutter.radius, topEnd = Gutter.radius, bottomStart = Gutter.radius, bottomEnd = Gutter.radius))
+                    // square top-left whichever tile is selected: every tile goes flat-bottomed while
+                    // a panel is open, and the first one sits on this corner, so a rounded one would
+                    // curve away beneath it and leave a notch
+                    .clip(RoundedCornerShape(topStart = 0.dp, topEnd = Gutter.radius, bottomStart = Gutter.radius, bottomEnd = Gutter.radius))
                     .background(palette.publicationPanelBg)
                     .padding(Gutter.half),
                 verticalArrangement = Arrangement.spacedBy(Gutter.half),
@@ -156,8 +185,8 @@ fun PublicationsSection(
                     PublicationActions(
                         label = plugin.label,
                         enabled = plugin.enabled && enabled,
-                        schedulable = plugin.schedulable,
-                        scheduledFor = scheduled,
+                        schedulable = offered?.get(plugin.name)?.schedulable ?: false,
+                        scheduleOn = scheduleOn,
                         publish = { plugin.publish(it) },
                         // once something's been published or scheduled the panel has done its
                         // job, and closing it is the sign that it worked

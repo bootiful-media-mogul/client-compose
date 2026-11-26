@@ -119,15 +119,13 @@ internal class PublicationScope(
  * panel keeps what was in it, as the Vue plugin components (always mounted) did. the publish
  * and schedule buttons beneath it come from the section; a plugin says what the main one is
  * called, when it can be pressed and what pressing it does. one without an action gets none.
+ * whether it can be scheduled isn't up to the panel: the server says, for every plugin alike.
  */
 internal abstract class PublicationPlugin(val scope: PublicationScope, val name: String, val icon: PluginIcon) {
 
     open val label: String? get() = null
 
     open val enabled: Boolean get() = true
-
-    /** false for the panels for which a later date makes no sense, like a download */
-    open val schedulable: Boolean get() = true
 
     open val hasAction: Boolean get() = true
 
@@ -197,9 +195,6 @@ internal open class DownloadPlugin(scope: PublicationScope, name: String, icon: 
     override val label: String get() = t(if (this.producing) "$messages.producing" else "$messages.download")
 
     override val enabled: Boolean get() = !this.disabled && !this.producing
-
-    // a download is for right now: there's nothing to schedule
-    override val schedulable: Boolean get() = false
 
     override suspend fun publish(scheduled: Instant?) {
         this.producing = true
@@ -344,7 +339,11 @@ internal class WordpressPlugin(scope: PublicationScope) :
     }
 }
 
-/** the plugins offered for each kind of publishable, in the order the Vue editors listed them */
+/**
+ * the panels the client has for each kind of publishable, in the order the Vue editors listed
+ * them. which of them are actually offered, and which can be scheduled, is the server's call
+ * (see PublicationsSection): a panel here for a plugin the server doesn't have isn't shown.
+ */
 internal fun pluginsFor(scope: PublicationScope): List<PublicationPlugin> = when (scope.type) {
     "post" -> listOf(
         BlogPostMarkdownFilePlugin(scope),

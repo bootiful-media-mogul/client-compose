@@ -1,6 +1,7 @@
 package com.joshlong.mogul.client.publications
 
 import com.joshlong.mogul.client.api.Publication
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -19,15 +20,36 @@ class PublicationActionsTest {
 
     @Test
     fun sayPublishUnlessThePanelNamesThem() {
-        assertEquals("Publish", mainButtonLabel(null, null))
-        assertEquals("Create blog post", mainButtonLabel(null, "Create blog post"))
+        assertEquals("Publish", mainButtonLabel(null))
+        assertEquals("Create blog post", mainButtonLabel("Create blog post"))
     }
 
-    // the home page's calendar has already said when, so the main button schedules for then
+    // the home page's calendar picks a day; the picker starts on it, at nine
     @Test
-    fun scheduleForTheMomentTheyAreGiven() {
-        val whenever = LocalDateTime(2099, 6, 15, 9, 0).toInstant(TimeZone.currentSystemDefault())
-        assertTrue(mainButtonLabel(whenever, "Create blog post").startsWith("Schedule for 06/15/99"))
+    fun startTheScheduleOnTheDayPicked() {
+        val now = LocalDateTime(2026, 11, 22, 10, 41).toInstant(this.zone)
+        val day = LocalDate(2026, 11, 30)
+        assertEquals(LocalDateTime(2026, 11, 30, 9, 0), initialScheduleTime(now, this.zone, day).toLocalDateTime(this.zone))
+    }
+
+    // no day, today, or a day gone by: the next hour, as anywhere else
+    @Test
+    fun startTheScheduleAtTheNextHourOtherwise() {
+        val now = LocalDateTime(2026, 11, 22, 10, 41).toInstant(this.zone)
+        val next = LocalDateTime(2026, 11, 22, 11, 0)
+        assertEquals(next, initialScheduleTime(now, this.zone, null).toLocalDateTime(this.zone))
+        assertEquals(next, initialScheduleTime(now, this.zone, LocalDate(2026, 11, 22)).toLocalDateTime(this.zone))
+        assertEquals(next, initialScheduleTime(now, this.zone, LocalDate(2026, 11, 1)).toLocalDateTime(this.zone))
+    }
+
+    // picking a day ahead means scheduling, so the picker is already open; not for a plugin that can't be
+    @Test
+    fun openTheSchedulerOnlyForADayAheadAndAPluginThatCanBeScheduled() {
+        val now = LocalDateTime(2026, 11, 22, 10, 41).toInstant(this.zone)
+        assertTrue(opensScheduler(true, now, this.zone, LocalDate(2026, 11, 23)))
+        assertFalse(opensScheduler(false, now, this.zone, LocalDate(2026, 11, 23)))
+        assertFalse(opensScheduler(true, now, this.zone, LocalDate(2026, 11, 22)))
+        assertFalse(opensScheduler(true, now, this.zone, null))
     }
 
     @Test

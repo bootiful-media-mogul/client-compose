@@ -459,6 +459,17 @@ class PublicationsService(private val client: GraphQlClient) {
         "publish",
     )
 
+    /** the plugins the server has for a kind of publishable, and whether each can be scheduled */
+    suspend fun publisherPlugins(publishableType: String): List<PublisherPluginDescriptor> =
+        this.client.field<List<PublisherPluginDescriptor>?>(
+            """
+            query (${'$'}publishableType: String) {
+              publisherPlugins(publishableType: ${'$'}publishableType) { name, publishableType, schedulable }
+            }
+            """,
+            mapOf("publishableType" to publishableType), "publisherPlugins",
+        ) ?: emptyList()
+
     suspend fun canPublish(publishableId: Long, publishableType: String, contextJson: String, plugin: String): Boolean =
         this.client.field(
             """

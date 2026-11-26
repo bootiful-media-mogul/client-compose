@@ -189,6 +189,17 @@ data class Publication(
     val publishing: Boolean get() = this.state == "pending"
 }
 
+/**
+ * a publisher plugin as the server describes it: the kind of publishable it publishes, and
+ * whether a publication through it can be scheduled for later
+ */
+@Serializable
+data class PublisherPluginDescriptor(
+    val name: String = "",
+    val publishableType: String = "",
+    val schedulable: Boolean = false,
+)
+
 @Serializable
 data class Attachment(
     val id: Long = 0,
