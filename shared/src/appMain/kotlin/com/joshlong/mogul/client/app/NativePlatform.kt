@@ -1,6 +1,7 @@
 package com.joshlong.mogul.client.app
 
 import com.joshlong.mogul.client.platform.AudioHandle
+import org.publicvalue.multiplatform.oidc.ExperimentalOpenIdConnect
 import org.publicvalue.multiplatform.oidc.flows.CodeAuthFlowFactory
 import org.publicvalue.multiplatform.oidc.tokenstore.TokenStore
 
@@ -16,6 +17,7 @@ internal expect object NativePlatform {
     val authFlows: CodeAuthFlowFactory
 
     /** where the tokens are kept: the keystore, the keychain, or the user's preferences */
+    @OptIn(ExperimentalOpenIdConnect::class)
     val tokenStore: TokenStore
 
     fun openUrl(url: String)
