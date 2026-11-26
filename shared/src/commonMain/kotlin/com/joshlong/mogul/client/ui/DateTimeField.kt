@@ -1,12 +1,20 @@
 package com.joshlong.mogul.client.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -18,7 +26,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.semantics.Role
 import com.joshlong.mogul.client.i18n.t
 import com.joshlong.mogul.client.theme.Gutter
@@ -53,22 +64,62 @@ fun DateTimeField(label: String, value: Instant?, onValueChange: (Instant) -> Un
         // the picker works in UTC midnights; the day is read back in UTC so it doesn't shift
         val dateState = rememberDatePickerState(initialSelectedDateMillis = local?.date?.atTime(0, 0)?.toInstant(TimeZone.UTC)?.toEpochMilliseconds())
         val timeState = rememberTimePickerState(initialHour = local?.hour ?: 12, initialMinute = local?.minute ?: 0, is24Hour = true)
-        DatePickerDialog(
-            onDismissRequest = { open = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    open = false
-                    val millis = dateState.selectedDateMillis ?: return@TextButton
-                    val date = Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.UTC).date
-                    // the seconds are kept, so a save doesn't truncate a date nobody changed the time of
-                    onValueChange(LocalDateTime(date, LocalTime(timeState.hour, timeState.minute, local?.second ?: 0)).toInstant(zone))
-                }) { Text(t("buttons.accept"), color = palette.ink) }
-            },
-            dismissButton = { TextButton(onClick = { open = false }) { Text(t("buttons.cancel"), color = palette.ink) } },
-        ) {
-            DatePicker(dateState)
-            Row(Modifier.fillMaxWidth().padding(Gutter.full), horizontalArrangement = Arrangement.Center) {
-                TimeInput(timeState)
+        // A date dialog's content is a Box: siblings overlap unless we provide a Column.
+        // Own the shell so the calendar, time and actions have a predictable layout.
+        Dialog(onDismissRequest = { open = false }) {
+            MaterialTheme(colorScheme = MaterialTheme.colorScheme.copy(
+                primaryContainer = palette.accent,
+                onPrimaryContainer = palette.accentInk,
+                secondaryContainer = palette.fieldBg,
+                onSecondaryContainer = palette.ink,
+            )) {
+                Surface(
+                    modifier = Modifier.widthIn(max = 360.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    color = palette.raised,
+                    border = BorderStroke(1.dp, palette.rule),
+                ) {
+                    Column {
+                        Text(
+                            label,
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = Gutter.full),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = palette.ink,
+                        )
+                        HorizontalDivider(color = palette.rule)
+                        Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                            DatePicker(
+                                state = dateState,
+                                title = null,
+                                headline = null,
+                                showModeToggle = false,
+                            )
+                            HorizontalDivider(Modifier.padding(horizontal = 24.dp), color = palette.rule)
+                            Column(
+                                Modifier.fillMaxWidth().padding(top = Gutter.full, bottom = Gutter.half),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(Gutter.half),
+                            ) {
+                                Text(zone.id, style = MaterialTheme.typography.bodySmall, color = palette.muted)
+                                TimeInput(timeState)
+                            }
+                        }
+                        HorizontalDivider(color = palette.rule)
+                        Row(
+                            Modifier.fillMaxWidth().padding(Gutter.full),
+                            horizontalArrangement = Arrangement.spacedBy(Gutter.half, Alignment.End),
+                        ) {
+                            TextButton(onClick = { open = false }) { Text(t("buttons.cancel"), color = palette.muted) }
+                            MogulButton(t("buttons.accept"), enabled = dateState.selectedDateMillis != null, onClick = {
+                                val millis = dateState.selectedDateMillis ?: return@MogulButton
+                                val date = Instant.fromEpochMilliseconds(millis).toLocalDateTime(TimeZone.UTC).date
+                                // Preserve seconds when editing an existing timestamp.
+                                onValueChange(LocalDateTime(date, LocalTime(timeState.hour, timeState.minute, local?.second ?: 0)).toInstant(zone))
+                                open = false
+                            })
+                        }
+                    }
+                }
             }
         }
     }
