@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Text
@@ -44,6 +45,7 @@ import com.joshlong.mogul.client.ui.MogulCheckbox
 import com.joshlong.mogul.client.ui.MogulIcon
 import com.joshlong.mogul.client.ui.MogulReadOnlyField
 import com.joshlong.mogul.client.ui.MogulTextField
+import com.joshlong.mogul.client.ui.bleed
 import com.joshlong.mogul.client.ui.dateTimeToString
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
@@ -353,7 +355,7 @@ fun NotesPanel(modifier: Modifier = Modifier) {
             },
             t("notes.filters.show-done"),
             // in line with the sections' titles and their notes
-            Modifier.padding(horizontal = Gutter.full),
+            Modifier.padding(horizontal = if (LocalLayoutWidth.current == LayoutWidth.Mobile) 0.dp else Gutter.full),
         )
         if (store.entityLoaded) {
             NotesSection(
@@ -425,11 +427,19 @@ private fun NoteComposer() {
 @Composable
 private fun NotesSection(title: String, notes: List<Note>, onNew: () -> Unit) {
     val scope = rememberCoroutineScope()
+    val mobile = LocalLayoutWidth.current == LayoutWidth.Mobile
     Column {
-        // the bar sits a gutter in from the panel's edges, and its text a gutter in from its own;
-        // the notes under it are a gutter in at both ends too, so they line up with the title
-        Legend(title, Modifier.fillMaxWidth().padding(top = Gutter.half))
-        Column(Modifier.fillMaxWidth().padding(horizontal = Gutter.full)) {
+        // the bar sits a gutter in from the panel's left edge, and its text a gutter in from its own;
+        // it runs through the panel's padding to its right edge, where it ends square.
+        // the notes under it are a gutter in at both ends, so they line up with the title.
+        // on mobile it spans the window, square at both ends, as a FormSection's legend does, and
+        // the notes keep the tab's own gutter, which is where the title then sits
+        Legend(
+            title,
+            Modifier.padding(top = Gutter.half).bleed(start = if (mobile) Gutter.full else 0.dp, end = Gutter.full),
+            shape = if (mobile) RoundedCornerShape(0.dp) else RoundedCornerShape(topStart = Gutter.radius, bottomStart = Gutter.radius),
+        )
+        Column(Modifier.fillMaxWidth().padding(horizontal = if (mobile) 0.dp else Gutter.full)) {
             Row(
                 Modifier.padding(vertical = Gutter.half),
                 verticalAlignment = Alignment.CenterVertically,
