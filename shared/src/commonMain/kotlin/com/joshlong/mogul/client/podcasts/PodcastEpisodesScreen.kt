@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.joshlong.mogul.client.api.Mogul
+import com.joshlong.mogul.client.api.Pager
 import com.joshlong.mogul.client.api.Podcast
 import com.joshlong.mogul.client.api.PodcastEpisode
 import com.joshlong.mogul.client.i18n.t
@@ -34,6 +35,7 @@ import com.joshlong.mogul.client.ui.FormSection
 import com.joshlong.mogul.client.ui.Icon
 import com.joshlong.mogul.client.ui.IconButton
 import com.joshlong.mogul.client.ui.MogulIcon
+import com.joshlong.mogul.client.ui.PagedList
 import com.joshlong.mogul.client.ui.confirmDeletion
 import com.joshlong.mogul.client.ui.dateTimeToString
 
@@ -42,15 +44,13 @@ import com.joshlong.mogul.client.ui.dateTimeToString
 fun PodcastEpisodesScreen(podcastId: Long) {
     val scope = rememberCoroutineScope()
     var podcast by remember { mutableStateOf<Podcast?>(null) }
-    var episodes by remember { mutableStateOf<List<PodcastEpisode>>(emptyList()) }
-
-    suspend fun loadPodcast() {
-        podcast = Mogul.podcasts.podcastById(podcastId)
-        episodes = Mogul.podcasts.podcastEpisodesPreviews(podcastId)
+    // the episodes arrive a page at a time, as the page is scrolled
+    val episodes = remember(podcastId) {
+        Pager<PodcastEpisode>(key = { it.id }) { offset, limit -> Mogul.podcasts.podcastEpisodesPreviews(podcastId, offset, limit) }
     }
 
     LaunchedEffect(podcastId) {
-        runCatching { loadPodcast() }.onFailure { println("podcasts: ${it.message}") }
+        runCatching { podcast = Mogul.podcasts.podcastById(podcastId) }.onFailure { println("podcasts: ${it.message}") }
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
@@ -58,6 +58,7 @@ fun PodcastEpisodesScreen(podcastId: Long) {
         FormSection(
             t("podcasts.episodes.title", "title" to (podcast?.title ?: "")),
             actions = {
+                IconButton(MogulIcon.Back, t("icons.back"), onClick = { Router.podcasts() })
                 IconButton(
                     MogulIcon.Plus,
                     t("icons.new-episode"),
@@ -71,7 +72,7 @@ fun PodcastEpisodesScreen(podcastId: Long) {
                 )
             },
         ) {
-            episodes.forEach { episode ->
+            PagedList(episodes, key = { it.id }) { episode ->
                 EpisodeResult(
                     episode,
                     onEdit = { Router.push(Route.Entity("episode", episode.id)) },
@@ -79,7 +80,7 @@ fun PodcastEpisodesScreen(podcastId: Long) {
                         scope.launchSafely {
                             if (confirmDeletion(t("confirm.deletion", "title" to episode.title))) {
                                 Mogul.podcasts.deletePodcastEpisode(episode.id)
-                                loadPodcast()
+                                episodes.remove(episode.id)
                             }
                         }
                     },

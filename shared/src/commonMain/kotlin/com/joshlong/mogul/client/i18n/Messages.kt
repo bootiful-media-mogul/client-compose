@@ -474,6 +474,7 @@ internal val englishMessages: Map<String, String> = buildMap {
     put("home.day.past", "This day has passed, so there is nothing more to publish on it.")
     put("home.day.open", "Open")
     put("icon.alt.default", "an image, #{image}")
+    put("icons.back", "Back")
     put("icons.new-blog", "New blog")
     put("icons.new-podcast", "New podcast")
     put("icons.new-post", "New post")

@@ -92,6 +92,7 @@ import com.joshlong.mogul.client.ui.Icon
 import com.joshlong.mogul.client.ui.IconButton
 import com.joshlong.mogul.client.ui.LayoutWidth
 import com.joshlong.mogul.client.ui.LocalLayoutWidth
+import com.joshlong.mogul.client.ui.LocalPageScroll
 import com.joshlong.mogul.client.ui.LocalWindowWidth
 import com.joshlong.mogul.client.ui.PageLayout
 import com.joshlong.mogul.client.ui.MogulIcon
@@ -222,6 +223,7 @@ fun App() {
  */
 @Composable
 private fun DesktopLayout(user: User, route: Route, navController: NavHostController, onSearch: () -> Unit) {
+    val pageScroll = rememberScrollState()
     Column(Modifier.fillMaxSize()) {
         // over the page, which the section names' tabs drop onto
         TopBar(user, route, onSearch, Modifier.zIndex(1f))
@@ -229,10 +231,10 @@ private fun DesktopLayout(user: User, route: Route, navController: NavHostContro
         // draws to its own bounds (and barely past them), which would square off the panels' shadows
         Row(Modifier.align(Alignment.CenterHorizontally).widthIn(max = PageLayout.maxWidth).fillMaxSize().windowInsetsPadding(underTheBottom)) {
             Column(
-                Modifier.weight(1f).fillMaxSize().verticalScroll(rememberScrollState())
+                Modifier.weight(1f).fillMaxSize().verticalScroll(pageScroll)
                     .padding(start = Gutter.full * 2, top = 40.dp, bottom = 48.dp),
             ) {
-                Pages(navController)
+                CompositionLocalProvider(LocalPageScroll provides pageScroll) { Pages(navController) }
             }
             Column(
                 Modifier.width(PageLayout.sidebarWidth + Gutter.full * 3).fillMaxSize().verticalScroll(rememberScrollState())
@@ -305,6 +307,7 @@ private fun SidebarPanelFrame(panel: SidebarPanel, title: String, icon: MogulIco
 private fun MobileLayout(user: User, route: Route, navController: NavHostController, onSearch: () -> Unit) {
     val tabs = listOf("app.tabs.main", "app.panels.notes", "app.panels.media-preview", "app.panels.transcripts")
     var active by remember { mutableStateOf(0) }
+    val pageScroll = rememberScrollState()
     // a new page shows the main tab; a panel asking to open shows its own
     LaunchedEffect(route) { active = 0 }
     LaunchedEffect(Unit) {
@@ -346,13 +349,16 @@ private fun MobileLayout(user: User, route: Route, navController: NavHostControl
                 }
             }
             Column(
-                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).windowInsetsPadding(underTheBottom)
+                Modifier.fillMaxSize().verticalScroll(pageScroll).windowInsetsPadding(underTheBottom)
                     .padding(Gutter.full).padding(bottom = 96.dp),
             ) {
                 // the page stays composed (hidden, and clipped so nothing of it shows) while
                 // another tab is up, so an editor keeps what you typed; the panels keep their
                 // own state in their stores, so they can come and go
-                Box(if (active == 0) Modifier else Modifier.size(0.dp).clipToBounds()) { Pages(navController) }
+                // a hidden page has no scroll to speak of, so nothing on it loads more on a panel's account
+                Box(if (active == 0) Modifier else Modifier.size(0.dp).clipToBounds()) {
+                    CompositionLocalProvider(LocalPageScroll provides pageScroll.takeIf { active == 0 }) { Pages(navController) }
+                }
                 when (active) {
                     1 -> NotesPanel()
                     2 -> PreviewPanel()

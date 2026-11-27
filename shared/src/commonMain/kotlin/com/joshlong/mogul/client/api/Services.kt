@@ -200,13 +200,14 @@ class PodcastsService(private val client: GraphQlClient) {
         mapOf("title" to title), "createPodcast",
     )
 
-    suspend fun podcastEpisodesPreviews(podcastId: Long): List<PodcastEpisode> = this.client.field(
+    /** the episodes, newest first: all of them, or one page when an offset and/or limit is given */
+    suspend fun podcastEpisodesPreviews(podcastId: Long, offset: Int? = null, limit: Int? = null): List<PodcastEpisode> = this.client.field(
         """
-        query GetPodcastEpisodesByPodcast(${'$'}podcastId: Int) {
-          podcastEpisodesByPodcast(podcastId: ${'$'}podcastId) { created, id, title, description, complete }
+        query GetPodcastEpisodesByPodcast(${'$'}podcastId: Int, ${'$'}offset: Int, ${'$'}limit: Int) {
+          podcastEpisodesByPodcast(podcastId: ${'$'}podcastId, offset: ${'$'}offset, limit: ${'$'}limit) { created, id, title, description, complete }
         }
         """,
-        mapOf("podcastId" to podcastId), "podcastEpisodesByPodcast",
+        mapOf("podcastId" to podcastId, "offset" to offset, "limit" to limit), "podcastEpisodesByPodcast",
     )
 
     suspend fun transcribePodcastEpisodeSegment(podcastEpisodeSegmentId: Long): Boolean = this.client.field(
@@ -564,9 +565,10 @@ class BlogsService(private val client: GraphQlClient) {
         "mutation (\$content: String) { summarize(content: \$content) }", mapOf("content" to content), "summarize",
     )
 
-    suspend fun blogPostPreviewsByBlog(blogId: Long): List<Post> = this.client.field(
-        "query blogPostsByBlog(\$blogId: Int) { blogPostsByBlog(blogId: \$blogId) { id, title, content, summary, rssSlug, complete, visible, created } }",
-        mapOf("blogId" to blogId), "blogPostsByBlog",
+    /** the posts, newest first: all of them, or one page when an offset and/or limit is given */
+    suspend fun blogPostPreviewsByBlog(blogId: Long, offset: Int? = null, limit: Int? = null): List<Post> = this.client.field(
+        "query blogPostsByBlog(\$blogId: Int, \$offset: Int, \$limit: Int) { blogPostsByBlog(blogId: \$blogId, offset: \$offset, limit: \$limit) { id, title, content, summary, rssSlug, complete, visible, created } }",
+        mapOf("blogId" to blogId, "offset" to offset, "limit" to limit), "blogPostsByBlog",
     )
 
     suspend fun blogPostsByBlog(blogId: Long): List<Post> = this.client.field(

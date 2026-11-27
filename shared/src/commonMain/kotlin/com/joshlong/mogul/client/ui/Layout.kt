@@ -1,5 +1,6 @@
 package com.joshlong.mogul.client.ui
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -37,3 +38,9 @@ val LocalLayoutWidth = compositionLocalOf { LayoutWidth.Desktop }
 
 /** the window's width, for the few things the Vue client sized in vw */
 val LocalWindowWidth = compositionLocalOf { 1200.dp }
+
+/**
+ * the scroll of the column the page sits in, for whatever on the page needs to know how near
+ * its bottom is, e.g. a [PagedList]. null while the page isn't the thing on show.
+ */
+val LocalPageScroll = compositionLocalOf<ScrollState?> { null }

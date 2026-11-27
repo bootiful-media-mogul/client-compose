@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.joshlong.mogul.client.api.Blog
 import com.joshlong.mogul.client.api.Mogul
+import com.joshlong.mogul.client.api.Pager
 import com.joshlong.mogul.client.api.Post
 import com.joshlong.mogul.client.i18n.t
 import com.joshlong.mogul.client.nav.Route
@@ -29,6 +30,7 @@ import com.joshlong.mogul.client.ui.FormSection
 import com.joshlong.mogul.client.ui.Icon
 import com.joshlong.mogul.client.ui.IconButton
 import com.joshlong.mogul.client.ui.MogulIcon
+import com.joshlong.mogul.client.ui.PagedList
 import com.joshlong.mogul.client.ui.confirmDeletion
 import com.joshlong.mogul.client.ui.dateTimeToString
 import kotlinx.coroutines.launch
@@ -38,20 +40,19 @@ import kotlinx.coroutines.launch
 fun BlogPostsScreen(blogId: Long) {
     val scope = rememberCoroutineScope()
     var blog by remember { mutableStateOf<Blog?>(null) }
-    var posts by remember { mutableStateOf<List<Post>>(emptyList()) }
-
-    suspend fun loadBlog() {
-        blog = Mogul.blogs.blogById(blogId)
-        posts = Mogul.blogs.blogPostPreviewsByBlog(blogId)
+    // the posts arrive a page at a time, as the page is scrolled
+    val posts = remember(blogId) {
+        Pager<Post>(key = { it.id }) { offset, limit -> Mogul.blogs.blogPostPreviewsByBlog(blogId, offset, limit) }
     }
 
-    LaunchedEffect(blogId) { loadBlog() }
+    LaunchedEffect(blogId) { blog = Mogul.blogs.blogById(blogId) }
 
     Column(verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
         PageTitle(t("blogs.posts.title"))
         FormSection(
             t("blogs.posts.posts-for", "title" to (blog?.title ?: "")),
             actions = {
+                IconButton(MogulIcon.Back, t("icons.back"), onClick = { Router.push(Route.Blogs) })
                 IconButton(MogulIcon.Plus, t("icons.new-post"), onClick = {
                     scope.launch {
                         val post = Mogul.blogs.createPost(blogId, "", "", "")
@@ -60,12 +61,12 @@ fun BlogPostsScreen(blogId: Long) {
                 })
             },
         ) {
-            posts.forEach { post ->
+            PagedList(posts, key = { it.id }) { post ->
                 PostResult(post, onEdit = { Router.push(Route.BlogPost(blogId, post.id)) }, onDelete = {
                     scope.launch {
                         if (confirmDeletion(t("confirm.deletion", "title" to post.title))) {
                             Mogul.blogs.deletePost(post.id)
-                            loadBlog()
+                            posts.remove(post.id)
                         }
                     }
                 })

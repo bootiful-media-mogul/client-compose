@@ -43,6 +43,10 @@ private val composeMessages: Map<String, String> = mapOf(
     "notes.summary.errors.model" to "The page was read, but summarizing it didn't work. Try again.",
     "notes.summary.errors.timeout" to "Summarizing is taking too long. Try again later.",
     "notes.summary.errors.failed" to "This page couldn't be summarized. Try again.",
+    // a list that loads a page at a time as you scroll
+    "paging.loading" to "Loading…",
+    "paging.failed" to "The rest couldn't be loaded: {message}",
+    "paging.retry" to "Try again",
 )
 
 private fun message(key: String): String? = englishMessages[key] ?: composeMessages[key]

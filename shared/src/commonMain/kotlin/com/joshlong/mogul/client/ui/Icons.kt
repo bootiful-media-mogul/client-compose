@@ -42,6 +42,7 @@ enum class MogulIcon(val resource: DrawableResource) {
     AudioEditor(Res.drawable.ic_audio_editor),
     AudioFile(Res.drawable.ic_audio_file),
     Ayrshare(Res.drawable.ic_ayrshare),
+    Back(Res.drawable.ic_back),
     Bold(Res.drawable.ic_bold),
     Checkbox(Res.drawable.ic_checkbox),
     Close(Res.drawable.ic_close),
