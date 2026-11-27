@@ -43,7 +43,7 @@ object TextSize {
     val xs = 12.sp
     val sm = 15.sp
     val base = 16.sp
-    val control = 17.sp
+    val control = 16.sp
     val lg = 20.sp
 }
 
