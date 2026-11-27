@@ -6,6 +6,7 @@ import com.joshlong.mogul.client.api.parseNumberContext
 import com.joshlong.mogul.client.i18n.t
 import com.joshlong.mogul.client.i18n.tc
 import com.joshlong.mogul.client.nav.Route
+import com.joshlong.mogul.client.nav.Urls
 import com.joshlong.mogul.client.nav.navigationFor
 import com.joshlong.mogul.client.theme.AppliedTheme
 import com.joshlong.mogul.client.theme.DarkPalette
@@ -27,16 +28,16 @@ class RouteTest {
 
     @Test
     fun parsesEveryPage() {
-        assertEquals(Route.Home, Route.parse("/"))
-        assertEquals(Route.Jobs, Route.parse("/jobs"))
-        assertEquals(Route.Podcasts(123), Route.parse("/podcasts?when=123"))
-        assertEquals(Route.PodcastEpisodes(3), Route.parse("/podcasts/3/episodes"))
-        assertEquals(Route.PodcastEpisode(3, 9), Route.parse("/podcasts/3/episodes/9/"))
-        assertEquals(Route.BlogPosts(1), Route.parse("/blogs/1/posts"))
-        assertEquals(Route.BlogPost(1, 2), Route.parse("/blogs/1/posts/2"))
-        assertEquals(Route.Entity("episode", 7), Route.parse("/entities/episode/7"))
-        assertEquals(Route.Search("spring boot"), Route.parse("/search?query=spring%20boot"))
-        assertTrue(Route.parse("/nope/x") is Route.NotFound)
+        assertEquals(Route.Home, Urls.routeOf("/"))
+        assertEquals(Route.Jobs, Urls.routeOf("/jobs"))
+        assertEquals(Route.Podcasts(123), Urls.routeOf("/podcasts?when=123"))
+        assertEquals(Route.PodcastEpisodes(3), Urls.routeOf("/podcasts/3/episodes"))
+        assertEquals(Route.PodcastEpisode(3, 9), Urls.routeOf("/podcasts/3/episodes/9/"))
+        assertEquals(Route.BlogPosts(1), Urls.routeOf("/blogs/1/posts"))
+        assertEquals(Route.BlogPost(1, 2), Urls.routeOf("/blogs/1/posts/2"))
+        assertEquals(Route.Entity("episode", 7), Urls.routeOf("/entities/episode/7"))
+        assertEquals(Route.Search("spring boot"), Urls.routeOf("/search?query=spring%20boot"))
+        assertTrue(Urls.routeOf("/nope/x") is Route.NotFound)
     }
 
     @Test
@@ -44,7 +45,7 @@ class RouteTest {
         listOf(
             Route.Home, Route.Blogs, Route.Settings, Route.About, Route.PodcastEpisode(1, 2),
             Route.BlogPost(4, 5), Route.Search("a&b ü"),
-        ).forEach { assertEquals(it, Route.parse(it.path)) }
+        ).forEach { assertEquals(it, Urls.routeOf(Urls.pathOf(it))) }
     }
 
     @Test

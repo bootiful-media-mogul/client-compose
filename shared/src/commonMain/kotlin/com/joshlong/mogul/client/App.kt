@@ -32,6 +32,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -61,31 +63,21 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import com.joshlong.mogul.client.about.AboutScreen
 import com.joshlong.mogul.client.api.Mogul
 import com.joshlong.mogul.client.api.User
-import com.joshlong.mogul.client.blogs.BlogPostEditorScreen
-import com.joshlong.mogul.client.blogs.BlogPostsScreen
-import com.joshlong.mogul.client.blogs.BlogsScreen
 import com.joshlong.mogul.client.events.AppEvent
 import com.joshlong.mogul.client.events.Events
 import com.joshlong.mogul.client.events.SidebarPanel
-import com.joshlong.mogul.client.home.HomeScreen
 import com.joshlong.mogul.client.i18n.t
-import com.joshlong.mogul.client.jobs.JobsScreen
 import com.joshlong.mogul.client.managedfiles.PreviewPanel
+import com.joshlong.mogul.client.nav.Pages
 import com.joshlong.mogul.client.nav.Route
 import com.joshlong.mogul.client.nav.Router
 import com.joshlong.mogul.client.notes.NotesPanel
 import com.joshlong.mogul.client.notifications.NotificationBox
 import com.joshlong.mogul.client.platform.browser
 import com.joshlong.mogul.client.platform.signIn
-import com.joshlong.mogul.client.podcasts.PodcastEpisodeEditorScreen
-import com.joshlong.mogul.client.podcasts.PodcastEpisodesScreen
-import com.joshlong.mogul.client.podcasts.PodcastsScreen
 import com.joshlong.mogul.client.search.SearchPalette
-import com.joshlong.mogul.client.search.SearchScreen
-import com.joshlong.mogul.client.settings.SettingsScreen
 import com.joshlong.mogul.client.theme.Gutter
 import com.joshlong.mogul.client.theme.MogulTheme
 import com.joshlong.mogul.client.theme.TextSize
@@ -172,8 +164,6 @@ fun App() {
     LaunchedEffect(Unit) {
         browser.setDocumentLanguage("en")
         ThemeController.start(scope)
-        Router.start(scope)
-        Router.resumePendingAction()
         loadSession()
     }
 
@@ -181,6 +171,7 @@ fun App() {
         Events.events.collect { if (it is AppEvent.Unauthorized && signIn.available) needsSignIn = true }
     }
 
+    val navController = rememberNavController()
     val route = Router.route
     LaunchedEffect(route) {
         val app = t("app.title")
@@ -209,8 +200,8 @@ fun App() {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     val width = PageLayout.widthFor(maxWidth, maxHeight)
                     CompositionLocalProvider(LocalLayoutWidth provides width, LocalWindowWidth provides maxWidth) {
-                        if (width == LayoutWidth.Mobile) MobileLayout(user, route, onSearch = { paletteOpen = true })
-                        else DesktopLayout(user, route, onSearch = { paletteOpen = true })
+                        if (width == LayoutWidth.Mobile) MobileLayout(user, route, navController, onSearch = { paletteOpen = true })
+                        else DesktopLayout(user, route, navController, onSearch = { paletteOpen = true })
                     }
                 }
                 SearchPalette(open = paletteOpen, onDismiss = { paletteOpen = false })
@@ -222,27 +213,6 @@ fun App() {
     }
 }
 
-/** the page for the route; keyed on it, so a new route (even the same page) starts fresh */
-@Composable
-private fun RouteContent(route: Route) {
-    key(route) {
-        when (route) {
-            Route.Home -> HomeScreen()
-            Route.Jobs -> JobsScreen()
-            is Route.Podcasts -> PodcastsScreen()
-            Route.Blogs -> BlogsScreen()
-            is Route.Search -> SearchScreen(route.query)
-            Route.Settings -> SettingsScreen()
-            Route.About -> AboutScreen()
-            is Route.BlogPosts -> BlogPostsScreen(route.blogId)
-            is Route.BlogPost -> BlogPostEditorScreen(route.blogId, route.postId)
-            is Route.PodcastEpisodes -> PodcastEpisodesScreen(route.podcastId)
-            is Route.PodcastEpisode -> PodcastEpisodeEditorScreen(route.podcastId, route.episodeId)
-            is Route.Entity -> Text(t("app.redirecting"), color = palette.muted)
-            is Route.NotFound -> Text(route.path, color = palette.muted)
-        }
-    }
-}
 
 /**
  * the desktop page, as App.vue's grid: the top bar, then the view beside a 400-wide sidebar,
@@ -251,7 +221,7 @@ private fun RouteContent(route: Route) {
  * plus a gutter; the sidebar's panels sit a gutter higher than that.
  */
 @Composable
-private fun DesktopLayout(user: User, route: Route, onSearch: () -> Unit) {
+private fun DesktopLayout(user: User, route: Route, navController: NavHostController, onSearch: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         // over the page, which the section names' tabs drop onto
         TopBar(user, route, onSearch, Modifier.zIndex(1f))
@@ -262,7 +232,7 @@ private fun DesktopLayout(user: User, route: Route, onSearch: () -> Unit) {
                 Modifier.weight(1f).fillMaxSize().verticalScroll(rememberScrollState())
                     .padding(start = Gutter.full * 2, top = 40.dp, bottom = 48.dp),
             ) {
-                RouteContent(route)
+                Pages(navController)
             }
             Column(
                 Modifier.width(PageLayout.sidebarWidth + Gutter.full * 3).fillMaxSize().verticalScroll(rememberScrollState())
@@ -332,7 +302,7 @@ private fun SidebarPanelFrame(panel: SidebarPanel, title: String, icon: MogulIco
 }
 
 @Composable
-private fun MobileLayout(user: User, route: Route, onSearch: () -> Unit) {
+private fun MobileLayout(user: User, route: Route, navController: NavHostController, onSearch: () -> Unit) {
     val tabs = listOf("app.tabs.main", "app.panels.notes", "app.panels.media-preview", "app.panels.transcripts")
     var active by remember { mutableStateOf(0) }
     // a new page shows the main tab; a panel asking to open shows its own
@@ -382,7 +352,7 @@ private fun MobileLayout(user: User, route: Route, onSearch: () -> Unit) {
                 // the page stays composed (hidden, and clipped so nothing of it shows) while
                 // another tab is up, so an editor keeps what you typed; the panels keep their
                 // own state in their stores, so they can come and go
-                Box(if (active == 0) Modifier else Modifier.size(0.dp).clipToBounds()) { RouteContent(route) }
+                Box(if (active == 0) Modifier else Modifier.size(0.dp).clipToBounds()) { Pages(navController) }
                 when (active) {
                     1 -> NotesPanel()
                     2 -> PreviewPanel()

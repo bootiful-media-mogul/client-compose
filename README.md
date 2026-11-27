@@ -81,7 +81,7 @@ Everything lives in `shared/src/commonMain/kotlin/com/joshlong/mogul/client`:
 
 - `api/` - the GraphQL client (Ktor), the models, and one service per area, with the Vue client's queries field for field. `Mogul` wires them all.
 - `platform/` - the one seam to the browser (history, storage, uploads, audio, Ably); the web's implementation is in `webMain`, the apps' in `appMain`, with the little that differs between them in `androidMain`, `iosMain`, and `desktopMain`.
-- `nav/` - the routes, with the Vue router's paths, kept in step with the address bar.
+- `nav/` - all the routing, in `Router.kt`: the routes, their paths (the Vue router's) in `Urls`, and the Navigation Compose `NavHost` that shows each one's screen, kept in step with the address bar.
 - `theme/` - the palettes from `base.css` (day, midnight, graphite, ember) and the same auto dark-mode rules, stored under the same `localStorage` key.
 - `i18n/` - the vue-i18n messages, generated into `Messages.kt` with the same keys and `{name}` / `one | many` syntax; `t()` and `tc()` look them up.
 - `ui/` - the shared controls: chrome buttons, fieldsets, text fields with tool panels, icons.
