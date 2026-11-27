@@ -29,6 +29,9 @@ internal expect object NativePlatform {
 
     fun prefersDark(): Boolean
 
+    /** the language the device is set to, as a tag like `en-US` */
+    fun language(): String
+
     /** a player for the audio at url, sent with headers (the bearer token, for the api's own files) */
     fun createAudio(url: String, headers: Map<String, String>): AudioHandle
 

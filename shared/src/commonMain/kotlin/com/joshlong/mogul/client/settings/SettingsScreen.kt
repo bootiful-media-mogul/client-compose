@@ -84,6 +84,7 @@ fun SettingsScreen() {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
         PageTitle(t("settings.title"))
         AppearanceSettings()
+        LanguageSettings()
         pages.forEach { page ->
             val plugin = label(page.category, "title")
             FormSection(plugin) {

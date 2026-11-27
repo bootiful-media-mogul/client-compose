@@ -80,6 +80,8 @@ internal actual object NativePlatform {
     actual fun prefersDark(): Boolean =
         (AndroidApp.context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
+    actual fun language(): String = java.util.Locale.getDefault().toLanguageTag()
+
     actual fun createAudio(url: String, headers: Map<String, String>): AudioHandle = AndroidAudio(url, headers)
 
     actual suspend fun saveDownload(bytes: ByteArray, filename: String) = withContext(Dispatchers.IO) {

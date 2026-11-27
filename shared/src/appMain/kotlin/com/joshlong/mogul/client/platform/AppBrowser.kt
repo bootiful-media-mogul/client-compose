@@ -85,6 +85,8 @@ private object AppBrowser : Browser {
 
     override fun setDocumentLanguage(language: String) = Unit
 
+    override fun language(): String = NativePlatform.language()
+
     override fun localGet(key: String): String? = this.settings.getStringOrNull(key)
 
     override fun localSet(key: String, value: String) = this.settings.putString(key, value)

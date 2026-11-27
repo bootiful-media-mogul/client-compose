@@ -68,6 +68,7 @@ import com.joshlong.mogul.client.api.User
 import com.joshlong.mogul.client.events.AppEvent
 import com.joshlong.mogul.client.events.Events
 import com.joshlong.mogul.client.events.SidebarPanel
+import com.joshlong.mogul.client.i18n.LanguageController
 import com.joshlong.mogul.client.i18n.t
 import com.joshlong.mogul.client.managedfiles.PreviewPanel
 import com.joshlong.mogul.client.nav.Pages
@@ -138,6 +139,8 @@ private val underTheSides
 
 @Composable
 fun App() {
+    // before anything is drawn, so the first frame is already in the chosen language
+    remember { LanguageController.start() }
     val scope = rememberCoroutineScope()
     var me by remember { mutableStateOf<User?>(null) }
     var paletteOpen by remember { mutableStateOf(false) }
@@ -155,6 +158,8 @@ fun App() {
             // here rather than in a view: this runs once per session whatever page you land
             // on. anything that resolves "today" server-side needs the zone on record
             runCatching { Mogul.mogul.adoptBrowserTimeZoneIfUnset(user) }
+            // the account's language is this device's too; an account with none is given this device's
+            runCatching { LanguageController.adopt(user.language)?.let { Mogul.mogul.setLanguage(it.code) } }
             Mogul.notifications.start()
         } else {
             println("could not get user info from mogul.user()")
@@ -163,7 +168,6 @@ fun App() {
     }
 
     LaunchedEffect(Unit) {
-        browser.setDocumentLanguage("en")
         ThemeController.start(scope)
         loadSession()
     }
@@ -174,7 +178,7 @@ fun App() {
 
     val navController = rememberNavController()
     val route = Router.route
-    LaunchedEffect(route) {
+    LaunchedEffect(route, LanguageController.current) {
         val app = t("app.title")
         browser.setTitle(route.titleKey?.let { "${t(it)} - $app" } ?: app)
     }

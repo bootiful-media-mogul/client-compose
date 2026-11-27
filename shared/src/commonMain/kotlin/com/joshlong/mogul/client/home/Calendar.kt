@@ -2,6 +2,7 @@ package com.joshlong.mogul.client.home
 
 import com.joshlong.mogul.client.api.Publication
 import com.joshlong.mogul.client.api.PublishableReference
+import com.joshlong.mogul.client.i18n.t
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
@@ -126,21 +127,20 @@ internal fun step(view: CalendarView, anchor: LocalDate, direction: Int): LocalD
     if (view == CalendarView.Week) anchor.addDays(7 * direction)
     else firstOfMonth(anchor).plus(direction, DateTimeUnit.MONTH)
 
-// dates in words, as toLocaleDateString wrote them in an english browser
+// dates in words, in the studio's language. a language that writes its months and weekdays
+// small still starts a heading with a capital, hence capitalized
 
-private val monthNames = listOf(
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-)
+private fun String.capitalized(): String = replaceFirstChar { it.uppercase() }
 
-private val weekdayNames = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+private fun month(d: LocalDate): String = t("dates.months.${d.month.ordinal + 1}")
 
-internal fun monthName(d: LocalDate): String = monthNames[d.month.ordinal]
+internal fun monthName(d: LocalDate): String = month(d).capitalized()
 
-internal fun weekdayShort(d: DayOfWeek): String = weekdayNames[d.ordinal].take(3)
+internal fun weekdayShort(d: DayOfWeek): String = t("dates.weekdays.${d.ordinal + 1}").take(3).capitalized()
 
 /** e.g. `Monday, November 22` */
-internal fun longDay(d: LocalDate): String = "${weekdayNames[d.dayOfWeek.ordinal]}, ${monthName(d)} ${d.day}"
+internal fun longDay(d: LocalDate): String =
+    t("dates.long-day", "weekday" to t("dates.weekdays.${d.dayOfWeek.ordinal + 1}"), "month" to month(d), "day" to d.day).capitalized()
 
 /** e.g. `9:05 AM` */
 internal fun time(i: Instant): String {

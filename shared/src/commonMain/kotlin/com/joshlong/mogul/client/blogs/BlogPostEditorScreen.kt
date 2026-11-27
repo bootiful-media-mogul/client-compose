@@ -19,6 +19,7 @@ import com.joshlong.mogul.client.api.Mogul
 import com.joshlong.mogul.client.api.Post
 import com.joshlong.mogul.client.compositions.compositionTool
 import com.joshlong.mogul.client.events.loadNotesForNotable
+import com.joshlong.mogul.client.i18n.currentLanguage
 import com.joshlong.mogul.client.i18n.t
 import com.joshlong.mogul.client.publications.PublicationsSection
 import com.joshlong.mogul.client.theme.Gutter
@@ -87,6 +88,7 @@ fun BlogPostEditorScreen(blogId: Long, postId: Long) {
                                     """
     derive a summary of the following blog post.
     do not include or refer to any embedded HTML markup like <IFRAME> elements when generating the summary.
+    write the summary in ${currentLanguage.englishName}, whatever language the post itself is in.
 
     ===================================
     ${current?.content ?: ""}""",

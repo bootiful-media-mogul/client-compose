@@ -26,6 +26,9 @@ interface Browser {
 
     fun setDocumentLanguage(language: String)
 
+    /** the language the device is set to, as a tag like `en-US` or `es` */
+    fun language(): String
+
     // storage. every access can throw (private mode, blocked site data), so these swallow
     fun localGet(key: String): String?
 

@@ -76,6 +76,8 @@ internal actual object NativePlatform {
 
     actual fun prefersDark(): Boolean = currentSystemTheme == SystemTheme.DARK
 
+    actual fun language(): String = java.util.Locale.getDefault().toLanguageTag()
+
     actual fun createAudio(url: String, headers: Map<String, String>): AudioHandle = JavaFxAudio(url, headers)
 
     actual suspend fun saveDownload(bytes: ByteArray, filename: String) = withContext(Dispatchers.IO) {

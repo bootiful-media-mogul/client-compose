@@ -27,6 +27,8 @@ private fun jsSetTitle(title: String): Unit = js("document.title = title")
 
 private fun jsSetLanguage(language: String): Unit = js("document.documentElement.lang = language")
 
+private fun jsLanguage(): String = js("navigator.language || ''")
+
 private fun jsLocalGet(key: String): String? = js("(function () { try { return window.localStorage.getItem(key) } catch (e) { return null } })()")
 
 private fun jsLocalSet(key: String, value: String): Unit = js("(function () { try { window.localStorage.setItem(key, value) } catch (e) {} })()")
@@ -189,6 +191,8 @@ private object WebBrowser : Browser {
     override fun setTitle(title: String) = jsSetTitle(title)
 
     override fun setDocumentLanguage(language: String) = jsSetLanguage(language)
+
+    override fun language(): String = jsLanguage()
 
     override fun localGet(key: String): String? = jsLocalGet(key)
 

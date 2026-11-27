@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.joshlong.mogul.client.i18n.t
 import com.joshlong.mogul.client.theme.fonts
 import com.joshlong.mogul.client.theme.palette
 import kotlinx.coroutines.launch
@@ -249,7 +250,7 @@ fun TrackEditor(
                     else -> false
                 }
             }
-            .semantics { contentDescription = "Audio track editor" },
+            .semantics { contentDescription = t("track-editor.label") },
     ) {
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val compact = maxWidth < 760.dp
@@ -317,9 +318,9 @@ private fun Toolbar(
                             true
                         } else false
                     }
-                    .semantics { contentDescription = "Go to time" },
+                    .semantics { contentDescription = t("track-editor.go-to.label") },
                 decorationBox = { inner ->
-                    if (jumpText.isEmpty()) Text("go to 0:30.0", color = colors.faint, fontFamily = fonts.mono, fontSize = 11.sp)
+                    if (jumpText.isEmpty()) Text(t("track-editor.go-to.placeholder"), color = colors.faint, fontFamily = fonts.mono, fontSize = 11.sp)
                     inner()
                 },
             )
@@ -438,7 +439,7 @@ private fun TrackSidebar(colors: TrackColors, width: Dp) {
             Modifier.fillMaxWidth().height(RULER_HEIGHT).drawBehind { drawLine(colors.line, Offset(0f, size.height), Offset(size.width, size.height)) }
                 .padding(start = if (width < 150.dp) 7.dp else 17.dp),
             contentAlignment = Alignment.CenterStart,
-        ) { Text("TIMELINE", style = label) }
+        ) { Text(t("track-editor.timeline"), style = label) }
         Row(
             Modifier.fillMaxWidth().height(LANE_HEIGHT).drawBehind { drawLine(colors.line, Offset(0f, size.height), Offset(size.width, size.height)) }
                 .padding(horizontal = if (width < 150.dp) 6.dp else 12.dp, vertical = 17.dp),
@@ -448,14 +449,14 @@ private fun TrackSidebar(colors: TrackColors, width: Dp) {
                 Text("01", color = colors.onInk, fontFamily = fonts.mono, fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
             }
             Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                Text("Audio 1", color = colors.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(t("track-editor.track"), color = colors.ink, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     Glyph(TrackGlyph.Volume, colors.muted, 12.dp)
-                    Text("Stereo · MP3", color = colors.muted, fontSize = 9.sp, maxLines = 1)
+                    Text(t("track-editor.format"), color = colors.muted, fontSize = 9.sp, maxLines = 1)
                 }
             }
         }
-        Text("SOURCE TRACK", Modifier.padding(horizontal = if (width < 150.dp) 7.dp else 17.dp, vertical = 15.dp), style = label.copy(letterSpacing = 1.2.sp, fontWeight = FontWeight.Normal))
+        Text(t("track-editor.source"), Modifier.padding(horizontal = if (width < 150.dp) 7.dp else 17.dp, vertical = 15.dp), style = label.copy(letterSpacing = 1.2.sp, fontWeight = FontWeight.Normal))
     }
 }
 
@@ -485,7 +486,7 @@ private fun TimelineContent(state: TrackEditorState, colors: TrackColors, marks:
                     },
             )
             Text(
-                "${formatTime(state.selectedDuration, true)} selected",
+                t("track-editor.selected", "duration" to formatTime(state.selectedDuration, true)),
                 Modifier.offset(x = (selection.start * zoom).dp, y = RULER_HEIGHT - 31.dp)
                     .clip(RoundedCornerShape(4.dp)).background(colors.ink).padding(horizontal = 7.dp, vertical = 4.dp),
                 color = colors.onInk,
@@ -785,9 +786,9 @@ private fun Footer(state: TrackEditorState, colors: TrackColors) {
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                 )
-                Text("${formatTime(state.selectedDuration, true)} selected", color = colors.muted, fontSize = 11.sp)
+                Text(t("track-editor.selected", "duration" to formatTime(state.selectedDuration, true)), color = colors.muted, fontSize = 11.sp)
             } else {
-                Text("Drag across the track to select a range", color = colors.muted, fontSize = 11.sp)
+                Text(t("track-editor.select-hint"), color = colors.muted, fontSize = 11.sp)
             }
         }
         DeleteRangeButton(state, colors)
@@ -817,6 +818,6 @@ private fun DeleteRangeButton(state: TrackEditorState, colors: TrackColors) {
         horizontalArrangement = Arrangement.spacedBy(7.dp),
     ) {
         Glyph(TrackGlyph.Trash, ink, 15.dp)
-        Text("Delete range", color = ink, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        Text(t("track-editor.delete-range"), color = ink, fontSize = 10.sp, fontWeight = FontWeight.Bold)
     }
 }

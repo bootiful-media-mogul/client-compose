@@ -17,13 +17,22 @@ import kotlin.time.Instant
 class MogulService(private val client: GraphQlClient) {
 
     suspend fun user(): User = this.client.field(
-        "query { me { id, name, email, givenName, familyName, timeZone } }",
+        "query { me { id, name, email, givenName, familyName, timeZone, language } }",
         emptyMap(), "me",
     )
 
     suspend fun setTimeZone(timeZone: String): Boolean = this.client.field(
         "mutation ( \$timeZone: String ) { setMogulTimeZone( timeZone: \$timeZone ) }",
         mapOf("timeZone" to timeZone), "setMogulTimeZone",
+    )
+
+    /**
+     * the language of the mogul's whole system, as a tag like `es`: what the api has the
+     * model write in, and what every device shows the studio in once it has signed in
+     */
+    suspend fun setLanguage(language: String): Boolean = this.client.field(
+        "mutation ( \$language: String ) { setMogulLanguage( language: \$language ) }",
+        mapOf("language" to language), "setMogulLanguage",
     )
 
     /**

@@ -37,11 +37,13 @@ import platform.Foundation.CFBridgingRetain
 import platform.Foundation.NSData
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
+import platform.Foundation.NSLocale
 import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.create
+import platform.Foundation.preferredLanguages
 import platform.Foundation.writeToURL
 import platform.Security.kSecAttrAccessible
 import platform.Security.kSecAttrAccessibleAfterFirstUnlock
@@ -79,6 +81,8 @@ internal actual object NativePlatform {
 
     actual fun prefersDark(): Boolean =
         UITraitCollection.currentTraitCollection.userInterfaceStyle == UIUserInterfaceStyle.UIUserInterfaceStyleDark
+
+    actual fun language(): String = NSLocale.preferredLanguages.firstOrNull() as? String ?: ""
 
     actual fun createAudio(url: String, headers: Map<String, String>): AudioHandle = IosAudio(url, headers)
 
