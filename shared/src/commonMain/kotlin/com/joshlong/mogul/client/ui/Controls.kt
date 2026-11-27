@@ -43,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -139,6 +140,39 @@ fun PageTitle(text: String, modifier: Modifier = Modifier) {
 }
 
 /**
+ * the chrome bar a legend or a notes section's title sits in, as base.css draws a .pure-form legend:
+ * the display face on the chrome color. its actions go in a row under it, as FormSection puts them.
+ * the caller places it with [modifier], e.g. a bleed, and gives it its [shape]; [inset] is how far
+ * its text sits in from its left end, which is what lines the text up with whatever is under it
+ */
+@Composable
+fun Legend(
+    text: String,
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(Gutter.radius),
+    inset: Dp = Gutter.full,
+) {
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .background(palette.chrome)
+            .padding(start = inset, end = 2.dp, top = 5.dp, bottom = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text,
+            modifier = Modifier.weight(1f),
+            color = palette.chromeInk,
+            fontFamily = fonts.display,
+            fontWeight = FontWeight.Medium,
+            fontSize = TextSize.base,
+            lineHeight = 24.sp,
+            letterSpacing = (-0.01 * 16).sp,
+        )
+    }
+}
+
+/**
  * a fieldset with its legend, as base.css draws a .pure-form legend: a chrome bar that
  * reaches one gutter left of the fields, so they sit inset under it (and one gutter right too on
  * mobile, so it spans the window), rounded at both ends wherever the page keeps a margin to the
@@ -155,19 +189,10 @@ fun FormSection(
     val layoutWidth = LocalLayoutWidth.current
     val shape = if (layoutWidth == LayoutWidth.Mobile) RoundedCornerShape(0.dp) else RoundedCornerShape(Gutter.radius)
     Column(modifier = modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-        Text(
+        Legend(
             legend,
-            modifier = Modifier
-                .bleed(start = Gutter.full, end = if (layoutWidth == LayoutWidth.Mobile) Gutter.full else 0.dp)
-                .clip(shape)
-                .background(palette.chrome)
-                .padding(start = Gutter.full, end = 2.dp, top = 5.dp, bottom = 5.dp),
-            color = palette.chromeInk,
-            fontFamily = fonts.display,
-            fontWeight = FontWeight.Medium,
-            fontSize = TextSize.base,
-            lineHeight = 24.sp,
-            letterSpacing = (-0.01 * 16).sp,
+            modifier = Modifier.bleed(start = Gutter.full, end = if (layoutWidth == LayoutWidth.Mobile) Gutter.full else 0.dp),
+            shape = shape,
         )
         if (actions != null) {
             Row(
@@ -467,15 +492,20 @@ private fun CarouselArrow(pointsLeft: Boolean, label: String, enabled: Boolean, 
     }
 }
 
+/**
+ * a checkbox and its label. the row takes the click, not the box: a box that takes its own is
+ * padded out to a touch target, which would set it in from the left edge of whatever is around it
+ */
 @Composable
 fun MogulCheckbox(checked: Boolean, onCheckedChange: (Boolean) -> Unit, label: String, modifier: Modifier = Modifier, enabled: Boolean = true) {
     Row(
-        modifier = modifier.clickable(enabled = enabled, role = Role.Checkbox) { onCheckedChange(!checked) },
+        modifier = modifier.clickable(enabled = enabled, role = Role.Checkbox) { onCheckedChange(!checked) }.heightIn(min = 48.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Gutter.half),
     ) {
         Checkbox(
             checked = checked,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = null,
             enabled = enabled,
             colors = CheckboxDefaults.colors(checkedColor = palette.accent, uncheckedColor = palette.fieldBorder, checkmarkColor = palette.accentInk),
         )

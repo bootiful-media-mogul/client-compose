@@ -143,7 +143,10 @@ private fun BlogEditor(blog: Blog, onDone: () -> Unit) {
     }
 
     val saveDisabled = key() == savedKey || "$description:$title".trim() == ":"
-    FormSection(t("blogs.editing", "title" to title, "blog" to title)) {
+    FormSection(
+        t("blogs.editing", "title" to title, "blog" to title),
+        actions = { IconButton(MogulIcon.Back, t("icons.back"), onClick = onDone) },
+    ) {
         MogulTextField(title, { title = it }, label = t("blogs.new-blog.title"), required = true, showCount = true)
         MogulTextField(
             description,
@@ -161,7 +164,6 @@ private fun BlogEditor(blog: Blog, onDone: () -> Unit) {
                     savedKey = key()
                 }
             })
-            MogulButton(t("blogs.done"), onClick = onDone)
         }
     }
 }

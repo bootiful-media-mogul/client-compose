@@ -36,6 +36,7 @@ import com.joshlong.mogul.client.theme.palette
 import com.joshlong.mogul.client.ui.ButtonRow
 import com.joshlong.mogul.client.ui.DragHandle
 import com.joshlong.mogul.client.ui.IconButton
+import com.joshlong.mogul.client.ui.Legend
 import com.joshlong.mogul.client.ui.LayoutWidth
 import com.joshlong.mogul.client.ui.LocalLayoutWidth
 import com.joshlong.mogul.client.ui.MogulButton
@@ -43,7 +44,6 @@ import com.joshlong.mogul.client.ui.MogulCheckbox
 import com.joshlong.mogul.client.ui.MogulIcon
 import com.joshlong.mogul.client.ui.MogulReadOnlyField
 import com.joshlong.mogul.client.ui.MogulTextField
-import com.joshlong.mogul.client.ui.SectionHeading
 import com.joshlong.mogul.client.ui.dateTimeToString
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
@@ -352,6 +352,8 @@ fun NotesPanel(modifier: Modifier = Modifier) {
                 scope.launch { store.reload() }
             },
             t("notes.filters.show-done"),
+            // in line with the sections' titles and their notes
+            Modifier.padding(horizontal = Gutter.full),
         )
         if (store.entityLoaded) {
             NotesSection(
@@ -424,28 +426,32 @@ private fun NoteComposer() {
 private fun NotesSection(title: String, notes: List<Note>, onNew: () -> Unit) {
     val scope = rememberCoroutineScope()
     Column {
-        Row(
-            Modifier.fillMaxWidth().padding(vertical = Gutter.half),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SectionHeading(title, Modifier.weight(1f))
-            IconButton(MogulIcon.Plus, t("icons.new-note"), onClick = onNew)
-        }
-        notes.forEach { note ->
-            Box(Modifier.fillMaxWidth().height(1.dp).background(palette.rule))
-            NoteItem(
-                note,
-                onDelete = { scope.launch { Mogul.notes.deleteNote(note.id); NotesStore.reload() } },
-                onDone = { done ->
-                    scope.launch {
-                        Mogul.notes.setNoteDone(
-                            note.id,
-                            done
-                        ); NotesStore.reload()
-                    }
-                },
-                onEdit = { NotesStore.loadIntoEditor(note) },
-            )
+        // the bar sits a gutter in from the panel's edges, and its text a gutter in from its own;
+        // the notes under it are a gutter in at both ends too, so they line up with the title
+        Legend(title, Modifier.fillMaxWidth().padding(top = Gutter.half))
+        Column(Modifier.fillMaxWidth().padding(horizontal = Gutter.full)) {
+            Row(
+                Modifier.padding(vertical = Gutter.half),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(MogulIcon.Plus, t("icons.new-note"), onClick = onNew)
+            }
+            notes.forEach { note ->
+                Box(Modifier.fillMaxWidth().height(1.dp).background(palette.rule))
+                NoteItem(
+                    note,
+                    onDelete = { scope.launch { Mogul.notes.deleteNote(note.id); NotesStore.reload() } },
+                    onDone = { done ->
+                        scope.launch {
+                            Mogul.notes.setNoteDone(
+                                note.id,
+                                done
+                            ); NotesStore.reload()
+                        }
+                    },
+                    onEdit = { NotesStore.loadIntoEditor(note) },
+                )
+            }
         }
     }
 }

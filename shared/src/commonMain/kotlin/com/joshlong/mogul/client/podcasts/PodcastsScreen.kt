@@ -158,7 +158,10 @@ private fun PodcastEditor(podcast: Podcast, onDone: () -> Unit) {
 
     val updateDisabled = title == dirtyKey || title.trim().isEmpty()
 
-    FormSection(t("podcasts.editing", "podcast" to title)) {
+    FormSection(
+        t("podcasts.editing", "podcast" to title),
+        actions = { IconButton(MogulIcon.Back, t("icons.back"), onClick = onDone) },
+    ) {
         MogulTextField(
             value = title,
             onValueChange = { title = it },
@@ -173,7 +176,6 @@ private fun PodcastEditor(podcast: Podcast, onDone: () -> Unit) {
                     dirtyKey = title
                 }
             })
-            MogulButton(t("podcasts.done"), onClick = onDone)
         }
     }
 }
