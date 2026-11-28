@@ -9,6 +9,7 @@ internal val spanishMessages: Map<String, String> = buildMap {
     put("labels.cancel", "Cancelar")
     put("labels.save", "Guardar")
     put("labels.create", "Crear")
+    put("app.connected-to", "Conectado a {server}")
     put("labels.optional-value", "(este campo es opcional)")
     put("account.label", "Cuenta: {name}")
     put("brand.name", "mogul")
