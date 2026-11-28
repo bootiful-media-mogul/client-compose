@@ -14,6 +14,6 @@ import com.joshlong.mogul.client.theme.palette
 fun AboutScreen() {
     Column(verticalArrangement = Arrangement.spacedBy(Gutter.full)) {
         PageTitle(t("about.title"))
-        Text(t("app.made-with-love", "josh" to "Josh Long"), color = palette.ink)
+        Text(t("app.made-with-love", "josh" to "Joshua Long"), color = palette.ink)
     }
 }
