@@ -80,6 +80,7 @@ enum class MogulIcon(val resource: DrawableResource) {
     Rss(Res.drawable.ic_rss),
     Search(Res.drawable.ic_search),
     Settings(Res.drawable.ic_settings),
+    SignOut(Res.drawable.ic_sign_out),
     Transcript(Res.drawable.ic_transcript),
     Up(Res.drawable.ic_up),
 }

@@ -547,6 +547,7 @@ private fun AccountMenu(user: User, up: Boolean) {
             if (signIn.available) {
                 val scope = rememberCoroutineScope()
                 DropdownMenuItem(
+                    leadingIcon = { Icon(MogulIcon.SignOut, null, size = 18.dp, tint = palette.muted) },
                     text = { Text(t("app.sign-out"), color = palette.ink) },
                     onClick = {
                         open = false
