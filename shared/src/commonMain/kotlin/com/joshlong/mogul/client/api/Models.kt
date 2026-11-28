@@ -49,8 +49,6 @@ data class User(
     val familyName: String? = null,
     /** IANA zone id, or null until the mogul has told us where they are */
     val timeZone: String? = null,
-    /** the language of the mogul's system as a tag like `es`, or null until a client has said */
-    val language: String? = null,
 ) {
     val fullName: String get() = listOfNotNull(this.givenName, this.familyName).filter { it.isNotBlank() }.joinToString(" ")
 

@@ -159,7 +159,8 @@ fun App() {
             // on. anything that resolves "today" server-side needs the zone on record
             runCatching { Mogul.mogul.adoptBrowserTimeZoneIfUnset(user) }
             // the account's language is this device's too; an account with none is given this device's
-            runCatching { LanguageController.adopt(user.language)?.let { Mogul.mogul.setLanguage(it.code) } }
+            // asked for apart from the user, so an api without the field costs the language and not the session
+            runCatching { LanguageController.adopt(Mogul.mogul.language())?.let { Mogul.mogul.setLanguage(it.code) } }
             Mogul.notifications.start()
         } else {
             println("could not get user info from mogul.user()")

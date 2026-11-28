@@ -6,6 +6,7 @@ import com.joshlong.mogul.client.platform.browser
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -17,9 +18,17 @@ import kotlin.time.Instant
 class MogulService(private val client: GraphQlClient) {
 
     suspend fun user(): User = this.client.field(
-        "query { me { id, name, email, givenName, familyName, timeZone, language } }",
+        "query { me { id, name, email, givenName, familyName, timeZone } }",
         emptyMap(), "me",
     )
+
+    /**
+     * the account's language as a tag like `es`, or null until a client has said. asked for
+     * apart from [user] so that an api which doesn't know the field yet fails this and not sign-in
+     */
+    suspend fun language(): String? =
+        this.client.execute("query { me { language } }", emptyMap())["me"]?.jsonObject?.get("language")
+            ?.let { if (it is JsonNull) null else it.jsonPrimitive.content }
 
     suspend fun setTimeZone(timeZone: String): Boolean = this.client.field(
         "mutation ( \$timeZone: String ) { setMogulTimeZone( timeZone: \$timeZone ) }",
