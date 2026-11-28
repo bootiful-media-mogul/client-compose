@@ -23,6 +23,7 @@ import com.joshlong.mogul.client.api.Mogul
 import com.joshlong.mogul.client.api.PodcastEpisode
 import com.joshlong.mogul.client.api.PodcastEpisodeSegment
 import com.joshlong.mogul.client.api.parseStringContext
+import com.joshlong.mogul.client.events.loadAnalysisForAnalyzable
 import com.joshlong.mogul.client.events.loadNotesForNotable
 import com.joshlong.mogul.client.i18n.t
 import com.joshlong.mogul.client.publications.PublicationsSection
@@ -72,6 +73,7 @@ fun PodcastEpisodeEditorScreen(podcastId: Long, episodeId: Long) {
         segments = episode.segments
         dirtyKey = "${if (episode.id != 0L) episode.id else ""}${episode.description}:${episode.title}:${episode.created?.toEpochMilliseconds() ?: ""}"
         loadNotesForNotable("episode", episodeId, episode.title)
+        loadAnalysisForAnalyzable("episode", episodeId, episode.title)
     }
 
     suspend fun loadEpisodeFromDbIntoEditor(id: Long) = loadEpisodeIntoEditor(Mogul.podcasts.podcastEpisodeById(id))

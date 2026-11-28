@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.joshlong.mogul.client.analysis.AnalysisPanel
 import com.joshlong.mogul.client.api.Mogul
 import com.joshlong.mogul.client.api.User
 import com.joshlong.mogul.client.events.AppEvent
@@ -252,6 +253,7 @@ private fun DesktopLayout(user: User, route: Route, navController: NavHostContro
                 SidebarPanelFrame(SidebarPanel.Notes, t("app.panels.notes"), MogulIcon.Notes) { NotesPanel() }
                 SidebarPanelFrame(SidebarPanel.Preview, t("app.panels.media-preview"), MogulIcon.Preview) { PreviewPanel() }
                 SidebarPanelFrame(SidebarPanel.Transcripts, t("app.panels.transcripts"), MogulIcon.Transcript) { TranscriptsPanel() }
+                SidebarPanelFrame(SidebarPanel.Analysis, t("app.panels.analysis"), MogulIcon.Ai) { AnalysisPanel() }
             }
         }
     }
@@ -313,7 +315,7 @@ private fun SidebarPanelFrame(panel: SidebarPanel, title: String, icon: MogulIco
 
 @Composable
 private fun MobileLayout(user: User, route: Route, navController: NavHostController, onSearch: () -> Unit) {
-    val tabs = listOf("app.tabs.main", "app.panels.notes", "app.panels.media-preview", "app.panels.transcripts")
+    val tabs = listOf("app.tabs.main", "app.panels.notes", "app.panels.media-preview", "app.panels.transcripts", "app.panels.analysis")
     var active by remember { mutableStateOf(0) }
     val pageScroll = rememberScrollState()
     // a new page shows the main tab; a panel asking to open shows its own
@@ -325,6 +327,7 @@ private fun MobileLayout(user: User, route: Route, navController: NavHostControl
                     SidebarPanel.Notes -> 1
                     SidebarPanel.Preview -> 2
                     SidebarPanel.Transcripts -> 3
+                    SidebarPanel.Analysis -> 4
                 }
             }
         }
@@ -371,6 +374,7 @@ private fun MobileLayout(user: User, route: Route, navController: NavHostControl
                     1 -> NotesPanel()
                     2 -> PreviewPanel()
                     3 -> TranscriptsPanel()
+                    4 -> AnalysisPanel()
                 }
             }
         }

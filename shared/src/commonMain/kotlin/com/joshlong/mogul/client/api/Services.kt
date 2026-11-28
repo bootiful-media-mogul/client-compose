@@ -666,6 +666,29 @@ class NotesService(private val client: GraphQlClient) {
     )
 }
 
+class AnalysisService(private val client: GraphQlClient) {
+
+    /** the analysis of an episode or a post, or null if it's never been analyzed */
+    suspend fun analysis(type: String, id: Long): Analysis? = this.client.field(
+        """
+        query (${'$'}type: String, ${'$'}id: Int) {
+          analysis(type: ${'$'}type, id: ${'$'}id) { type, analyzableId, created, highlights { kind, quote, reason, score, section, sectionName } }
+        }
+        """,
+        mapOf("type" to type, "id" to id), "analysis",
+    )
+
+    /**
+     * asks for an episode or a post to be analyzed. it's done when an analysis-completed-event
+     * keyed by `type:id` comes. false if there's nothing to analyze yet, an episode with no
+     * transcripts, say
+     */
+    suspend fun analyze(type: String, id: Long): Boolean = this.client.field(
+        "mutation Analyze(\$type: String, \$id: Int) { analyze(type: \$type, id: \$id) }",
+        mapOf("type" to type, "id" to id), "analyze",
+    )
+}
+
 class EntityContextsService(private val client: GraphQlClient) {
 
     suspend fun buildEntityContextFor(type: String, id: Long): EntityContext {

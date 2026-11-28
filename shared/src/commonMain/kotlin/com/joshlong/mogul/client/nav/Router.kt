@@ -21,6 +21,7 @@ import com.joshlong.mogul.client.api.json
 import com.joshlong.mogul.client.blogs.BlogPostEditorScreen
 import com.joshlong.mogul.client.blogs.BlogPostsScreen
 import com.joshlong.mogul.client.blogs.BlogsScreen
+import com.joshlong.mogul.client.events.resetAnalysisForAnalyzable
 import com.joshlong.mogul.client.events.resetNotesForNotable
 import com.joshlong.mogul.client.home.HomeScreen
 import com.joshlong.mogul.client.i18n.t
@@ -297,8 +298,12 @@ object Router {
     fun attach(controller: NavHostController) {
         if (this.controller === controller) return
         this.controller = controller
-// the notes panel follows the page: each page that has notes asks for them again
-        controller.addOnDestinationChangedListener { _, _, _ -> resetNotesForNotable() }
+// the notes and analysis panels follow the page: each page that has notes, or something to
+        // analyze, asks for them again
+        controller.addOnDestinationChangedListener { _, _, _ ->
+            resetNotesForNotable()
+            resetAnalysisForAnalyzable()
+        }
     }
 
     /** the browser's back and forward, once the pages are on screen */

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.joshlong.mogul.client.api.Mogul
 import com.joshlong.mogul.client.api.Post
 import com.joshlong.mogul.client.compositions.compositionTool
+import com.joshlong.mogul.client.events.loadAnalysisForAnalyzable
 import com.joshlong.mogul.client.events.loadNotesForNotable
 import com.joshlong.mogul.client.i18n.currentLanguage
 import com.joshlong.mogul.client.i18n.t
@@ -66,6 +67,7 @@ fun BlogPostEditorScreen(blogId: Long, postId: Long) {
         created = loaded.created
         savedKey = key()
         loadNotesForNotable("post", postId, title)
+        loadAnalysisForAnalyzable("post", postId, title)
     }
 
     LaunchedEffect(blogId, postId) { load() }

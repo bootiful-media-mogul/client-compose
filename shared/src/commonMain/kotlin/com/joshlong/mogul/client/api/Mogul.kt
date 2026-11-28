@@ -32,5 +32,6 @@ object Mogul {
     val ayrshare = AyrshareService(this.graphql)
     val transcripts = TranscriptsService(this.graphql)
     val notes = NotesService(this.graphql)
+    val analysis = AnalysisService(this.graphql)
     val entityContexts = EntityContextsService(this.graphql)
 }

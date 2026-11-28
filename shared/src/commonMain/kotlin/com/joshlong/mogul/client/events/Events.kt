@@ -16,6 +16,12 @@ sealed interface AppEvent {
     /** the notes panel should forget the notable it was showing */
     data object ResetNotesForNotable : AppEvent
 
+    /** the analysis panel should show the analysis of this analyzable (an episode or a post) */
+    data class AnalysisForAnalyzable(val type: String, val analyzableId: Long, val entityName: String) : AppEvent
+
+    /** the analysis panel should forget the analyzable it was showing */
+    data object ResetAnalysisForAnalyzable : AppEvent
+
     /** the preview panel should show this managed file */
     data class PreviewManagedFile(val managedFileId: Long) : AppEvent
 
@@ -26,7 +32,7 @@ sealed interface AppEvent {
     data class SidebarPanelOpened(val panel: SidebarPanel) : AppEvent
 }
 
-enum class SidebarPanel { Notes, Preview, Transcripts }
+enum class SidebarPanel { Notes, Preview, Transcripts, Analysis }
 
 object Events {
 
@@ -46,5 +52,10 @@ fun loadNotesForNotable(type: String, notableId: Long, entityName: String) =
     Events.emit(AppEvent.NotesForNotable(type, notableId, entityName))
 
 fun resetNotesForNotable() = Events.emit(AppEvent.ResetNotesForNotable)
+
+fun loadAnalysisForAnalyzable(type: String, analyzableId: Long, entityName: String) =
+    Events.emit(AppEvent.AnalysisForAnalyzable(type, analyzableId, entityName))
+
+fun resetAnalysisForAnalyzable() = Events.emit(AppEvent.ResetAnalysisForAnalyzable)
 
 fun previewManagedFile(managedFileId: Long) = Events.emit(AppEvent.PreviewManagedFile(managedFileId))

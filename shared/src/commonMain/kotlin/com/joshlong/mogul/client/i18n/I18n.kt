@@ -109,6 +109,23 @@ private val composeMessages: Map<String, String> = mapOf(
     "track-editor.selected" to "{duration} selected",
     "track-editor.select-hint" to "Drag across the track to select a range",
     "track-editor.delete-range" to "Delete range",
+    // the analysis panel: the most compelling parts of an episode or a post
+    "app.panels.analysis" to "Analysis",
+    "analysis.none" to "Open an episode or a post to find its most compelling parts.",
+    "analysis.entity.title" to "Analysis for {entityName}",
+    "analysis.buttons.analyze" to "Analyze",
+    "analysis.buttons.reanalyze" to "Analyze again",
+    "analysis.buttons.analyzing" to "Analyzing…",
+    "analysis.analyzed" to "Analyzed {when}",
+    "analysis.no-highlights" to "Nothing stood out.",
+    "analysis.highlight.label" to "{kind} ({score}/10)",
+    "analysis.highlight.label-in-section" to "{kind} ({score}/10), in {section}",
+    "analysis.kinds.entertaining" to "Entertaining",
+    "analysis.kinds.useful" to "Useful",
+    "analysis.kinds.quotable" to "Quotable",
+    "analysis.errors.empty" to "There's nothing to analyze yet. An episode needs a transcript first.",
+    "analysis.errors.failed" to "The analysis didn't work. Try again in a little while.",
+    "analysis.errors.timeout" to "The analysis is taking too long. Try again in a little while.",
 )
 
 private val spanishComposeMessages: Map<String, String> = mapOf(
@@ -174,6 +191,23 @@ private val spanishComposeMessages: Map<String, String> = mapOf(
     "track-editor.selected" to "{duration} seleccionados",
     "track-editor.select-hint" to "Arrastra sobre la pista para seleccionar un tramo",
     "track-editor.delete-range" to "Eliminar tramo",
+    // the analysis panel: the most compelling parts of an episode or a post
+    "app.panels.analysis" to "Análisis",
+    "analysis.none" to "Abre un episodio o una entrada para encontrar sus partes más atractivas.",
+    "analysis.entity.title" to "Análisis de {entityName}",
+    "analysis.buttons.analyze" to "Analizar",
+    "analysis.buttons.reanalyze" to "Volver a analizar",
+    "analysis.buttons.analyzing" to "Analizando…",
+    "analysis.analyzed" to "Analizado {when}",
+    "analysis.no-highlights" to "Nada destacó.",
+    "analysis.highlight.label" to "{kind} ({score}/10)",
+    "analysis.highlight.label-in-section" to "{kind} ({score}/10), en {section}",
+    "analysis.kinds.entertaining" to "Entretenido",
+    "analysis.kinds.useful" to "Útil",
+    "analysis.kinds.quotable" to "Citable",
+    "analysis.errors.empty" to "Todavía no hay nada que analizar. Un episodio necesita una transcripción primero.",
+    "analysis.errors.failed" to "El análisis no funcionó. Inténtalo de nuevo dentro de un rato.",
+    "analysis.errors.timeout" to "El análisis está tardando demasiado. Inténtalo de nuevo dentro de un rato.",
 )
 
 private val frenchComposeMessages: Map<String, String> = mapOf(
@@ -239,6 +273,23 @@ private val frenchComposeMessages: Map<String, String> = mapOf(
     "track-editor.selected" to "{duration} sélectionnées",
     "track-editor.select-hint" to "Faites glisser sur la piste pour sélectionner une plage",
     "track-editor.delete-range" to "Supprimer la plage",
+    // the analysis panel: the most compelling parts of an episode or a post
+    "app.panels.analysis" to "Analyse",
+    "analysis.none" to "Ouvrez un épisode ou un article pour en trouver les passages les plus marquants.",
+    "analysis.entity.title" to "Analyse de {entityName}",
+    "analysis.buttons.analyze" to "Analyser",
+    "analysis.buttons.reanalyze" to "Analyser à nouveau",
+    "analysis.buttons.analyzing" to "Analyse en cours…",
+    "analysis.analyzed" to "Analysé {when}",
+    "analysis.no-highlights" to "Rien ne ressort.",
+    "analysis.highlight.label" to "{kind} ({score}/10)",
+    "analysis.highlight.label-in-section" to "{kind} ({score}/10), dans {section}",
+    "analysis.kinds.entertaining" to "Divertissant",
+    "analysis.kinds.useful" to "Utile",
+    "analysis.kinds.quotable" to "Citable",
+    "analysis.errors.empty" to "Il n'y a encore rien à analyser. Un épisode a d'abord besoin d'une transcription.",
+    "analysis.errors.failed" to "L'analyse n'a pas fonctionné. Réessayez dans un moment.",
+    "analysis.errors.timeout" to "L'analyse prend trop de temps. Réessayez dans un moment.",
 )
 
 private fun translated(language: Language, key: String): String? = when (language) {

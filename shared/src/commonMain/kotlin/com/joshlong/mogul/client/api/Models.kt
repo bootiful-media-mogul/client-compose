@@ -291,6 +291,31 @@ data class Note(
     val title: String? = null,
 )
 
+/** the most compelling parts of an episode's or a post's text, as the model found them */
+@Serializable
+data class Analysis(
+    val type: String = "",
+    val analyzableId: Long = 0,
+    val created: DateTime? = null,
+    /** best first */
+    val highlights: List<Highlight> = emptyList(),
+)
+
+/**
+ * [kind] is entertaining, useful or quotable; [quote] is word for word from the text; [score] is
+ * 1 to 10. [section] is the key of the part of the text the quote is in (an episode's segment's
+ * id), and [sectionName] what that part was called when it was analyzed, if it had a name
+ */
+@Serializable
+data class Highlight(
+    val kind: String = "",
+    val quote: String = "",
+    val reason: String = "",
+    val score: Int = 0,
+    val section: String? = null,
+    val sectionName: String? = null,
+)
+
 @Serializable
 data class EntityContext(val resolvedType: String, val context: Map<String, Long>)
 
