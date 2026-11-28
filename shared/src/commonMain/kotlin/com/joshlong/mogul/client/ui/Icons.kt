@@ -64,6 +64,7 @@ enum class MogulIcon(val resource: DrawableResource) {
     ImageFile(Res.drawable.ic_image_file),
     Italic(Res.drawable.ic_italic),
     Jobs(Res.drawable.ic_jobs),
+    About(Res.drawable.ic_info),
     Link(Res.drawable.ic_link),
     List(Res.drawable.ic_list),
     Markdown(Res.drawable.ic_markdown),

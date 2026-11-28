@@ -107,7 +107,9 @@ private enum class Section(val label: String, val icon: MogulIcon, val main: Boo
     Podcasts("app.menu.podcasts", MogulIcon.Podcast, true),
     Blogs("app.menu.blogs", MogulIcon.Rss, true),
     Settings("app.menu.settings", MogulIcon.Settings, false),
-    Jobs("app.menu.jobs", MogulIcon.Jobs, false);
+    Jobs("app.menu.jobs", MogulIcon.Jobs, false),
+
+    About("app.menu.about", MogulIcon.About, false);
 
     fun go() = when (this) {
         Home -> Router.push(Route.Home)
@@ -115,6 +117,7 @@ private enum class Section(val label: String, val icon: MogulIcon, val main: Boo
         Blogs -> Router.push(Route.Blogs)
         Settings -> Router.push(Route.Settings)
         Jobs -> Router.push(Route.Jobs)
+        About-> Router.push(Route.About)
     }
 }
 
